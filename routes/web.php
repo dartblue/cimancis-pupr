@@ -19,13 +19,18 @@ use App\Http\Controllers\ReportController;
 | Web Routes
 |--------------------------------------------------------------------------
 */
-require __DIR__.'/auth.php';
+
+require __DIR__ . '/auth.php';
 
 
 // Guest routes (accessible without login)
 Route::get('/', [GuestController::class, 'index'])->name('guest.index');
 Route::get('/project-maps', [GuestController::class, 'project_map_index'])->name('guest.project-map');
 Route::get('/project-map/search', [GuestController::class, 'search'])->name('guest.project-map.search');
+
+Route::get('/project-map/map', function () {
+    return view('project-map.map');
+});
 
 
 // Operator and Helper routes
@@ -43,7 +48,7 @@ Route::middleware(['auth', 'operator_helper'])->prefix('operator-helper')->group
         ->name('field-condition-photos.destroy');
     Route::get('/history', [OperatorHelperController::class, 'history'])->name('operator-helper.history');
     Route::get('/history/{workAssignment}', [OperatorHelperController::class, 'historyDetail'])->name('operator-helper.history.detail');
-    
+
     Route::get('/profile/edit', [ProfileController::class, 'user_edit'])->name('operator-helper.profile.edit');
     Route::patch('/profile/update', [ProfileController::class, 'user_update'])->name('operator-helper.profile.update');
     Route::delete('/profile/delete', [ProfileController::class, 'user_destroy'])->name('operator-helper.profile.destroy');
@@ -52,7 +57,7 @@ Route::middleware(['auth', 'operator_helper'])->prefix('operator-helper')->group
 });
 
 // Admin routes (accessible only to admins)
-Route::middleware(['auth','admin'])->prefix('admin')->group(function () {
+Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     // Dashboard
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard')->middleware('auth');
 
@@ -77,7 +82,7 @@ Route::middleware(['auth','admin'])->prefix('admin')->group(function () {
     Route::put('/work-assignments/{workAssignment}/update-hours-meter', [WorkAssignmentController::class, 'updateHoursMeter'])->name('work-assignments.update-hours-meter');
     // Search route
     Route::get('/work-assignments-search', [WorkAssignmentController::class, 'search'])
-         ->name('work-assignments.search');
+        ->name('work-assignments.search');
     Route::delete('/delete-image/{type}/{id}', [WorkAssignmentController::class, 'delete_image'])->name('delete.image');
     Route::post('/work-assignments/{workAssignment}/photos', [WorkAssignmentController::class, 'uploadPhotos'])->name('work-assignments.upload-photos');
 
@@ -86,11 +91,11 @@ Route::middleware(['auth','admin'])->prefix('admin')->group(function () {
     Route::get('/project-map/search', [ProjectMapController::class, 'search'])->name('project-map.search');
     // API route for getting work assignments by location
     Route::get('/api/work-assignments-by-location', [WorkAssignmentController::class, 'getWorkAssignmentsByLocation'])
-         ->name('api.work-assignments.by-location');
+        ->name('api.work-assignments.by-location');
 
     // Completed Project routes
     Route::resource('completed-projects', CompletedProjectController::class);
-    
+
     Route::patch('/attendance-logs/{log}/update-hours-meter/{type}', [AttendanceController::class, 'updateHoursMeter'])->name('attendance.update-hours-meter');
 
     // Map routes
@@ -99,7 +104,7 @@ Route::middleware(['auth','admin'])->prefix('admin')->group(function () {
         Route::get('/active-projects', [MapController::class, 'activeProjects'])->name('maps.active_projects');
         Route::get('/search', [MapController::class, 'search'])->name('maps.search');
     });
-    
+
     // Laporan
     Route::get('/laporan', [ReportController::class, 'index'])->name('laporan.index');
     Route::get('/laporan/export', [ReportController::class, 'export'])->name('laporan.export');
