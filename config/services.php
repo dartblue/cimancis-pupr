@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'cartrack' => [
+        'token' => env('CARTRACK_API_TOKEN'),
+    ],
+
 ];
