@@ -1,19 +1,20 @@
 <?php
 
+use App\Models\Vehicle;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\MapController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\GuestController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\ProjectMapController;
 use App\Http\Controllers\HeavyEquipmentController;
+use App\Http\Controllers\OperatorHelperController;
 use App\Http\Controllers\WorkAssignmentController;
 use App\Http\Controllers\CompletedProjectController;
-use App\Http\Controllers\MapController;
-use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FieldConditionPhotoController;
-use App\Http\Controllers\GuestController;
-use App\Http\Controllers\OperatorHelperController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\ProjectMapController;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\ReportController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -30,6 +31,14 @@ Route::get('/project-map/search', [GuestController::class, 'search'])->name('gue
 
 Route::get('/project-map/map', function () {
     return view('project-map.map');
+});
+
+Route::get('/tracking/data', function () {
+    $vehicles = Vehicle::with(['positions' => function ($q) {
+        $q->orderBy('created_at', 'asc');
+    }])->get();
+
+    return response()->json($vehicles);
 });
 
 
