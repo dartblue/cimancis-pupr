@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('vehicles', function (Blueprint $table) {
             $table->id();
-            $table->bigInteger('vehicle_id')->primary();
+            $table->bigInteger('vehicle_id');
             $table->bigInteger('terminal_id')->nullable();
             $table->string('registration')->nullable();
             $table->string('manufacturer')->nullable();
