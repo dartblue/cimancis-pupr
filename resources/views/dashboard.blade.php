@@ -50,7 +50,7 @@
                                                     <span class="rounded-full text-md font-semibold px-2 py-1
                                                         {{ $equipment->status == 'ready' ? 'bg-green-200 text-green-800' :
                                                         ($equipment->status == 'beroperasi' ? 'bg-blue-200 text-blue-800' :
-                                                        'bg-orange-200 text-orange-800') }}">
+                                                        '-200 text-orange-800') }}">
                                                         {{ ucfirst($equipment->status) }}
                                                     </span>
                                                 </td>

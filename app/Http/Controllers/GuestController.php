@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\HeavyEquipment;
+use App\Models\User;
 use Illuminate\Http\Request;
 use App\Models\WorkAssignment;
 
@@ -26,8 +27,13 @@ class GuestController extends Controller
             ->whereYear('start_date', $selectedYear)
             ->count();
         $availableEquipments = HeavyEquipment::where('status', 'ready')->count();
+        $availableOperators = User::where('status', 'tersedia')->get();
 
         $heavyEquipments = HeavyEquipment::all();
+        $stillProjects = WorkAssignment::where('status', 'Sedang Berlangsung')
+            ->count();
+        $endProjects = WorkAssignment::where('status', 'Selesai')
+            ->count();
 
         $ongoingProjects = WorkAssignment::with([
             'heavyEquipment',
@@ -106,7 +112,10 @@ class GuestController extends Controller
             'activeProjects',
             'completedProjects',
             'availableEquipments',
+            'availableOperators',
             'ongoingProjects',
+            'stillProjects',
+            'endProjects',
             'completedProjectsMap',
             'ongoingProjectsMap',
             'heavyEquipments',

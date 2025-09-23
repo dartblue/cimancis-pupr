@@ -36,7 +36,7 @@
     </div>
 
     <script>
-        const map = L.map('map').setView([-6.200000, 106.816666], 12);
+        const map = L.map('map').setView([-6.889836, 107.640471], 9);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
         }).addTo(map);

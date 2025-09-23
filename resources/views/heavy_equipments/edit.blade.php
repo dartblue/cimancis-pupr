@@ -35,6 +35,7 @@
                                     <option value="beroperasi" {{ $heavyEquipment->status == 'beroperasi' ? 'selected' : '' }}>Beroperasi</option>
                                     <option value="ready" {{ $heavyEquipment->status == 'ready' ? 'selected' : '' }}>Ready</option>
                                     <option value="maintenance" {{ $heavyEquipment->status == 'maintenance' ? 'selected' : '' }}>Maintenance</option>
+                                    <option value="rusak" {{ $heavyEquipment->status == 'rusak' ? 'selected' : '' }}>Rusak</option>
                                 </select>
                             </div>
                             <div>

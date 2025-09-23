@@ -34,6 +34,7 @@
                                     <option value="beroperasi">Beroperasi</option>
                                     <option value="ready">Ready</option>
                                     <option value="maintenance">Maintenance</option>
+                                    <option value="rusak">Rusak</option>
                                 </select>
                             </div>
                             <div>
