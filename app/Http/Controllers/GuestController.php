@@ -9,7 +9,7 @@ use App\Models\WorkAssignment;
 
 class GuestController extends Controller
 {
-     public function index(Request $request)
+    public function index(Request $request)
     {
         // Ambil daftar tahun dari pekerjaan
         $years = WorkAssignment::selectRaw('DISTINCT YEAR(start_date) as year')
@@ -45,13 +45,13 @@ class GuestController extends Controller
                 $query->latest()->take(1);
             }
         ])
-        ->where('status', 'Sedang Berlangsung')
-        ->whereYear('start_date', $selectedYear)
-        ->get();
+            ->where('status', 'Sedang Berlangsung')
+            ->whereYear('start_date', $selectedYear)
+            ->get();
 
         $completedProjectsMap = WorkAssignment::where('status', 'Selesai')
             ->whereYear('start_date', $selectedYear)
-            ->with(['village', 'district', 'city', 'heavyEquipment', 'assignmentUsers.user', 'fieldConditionPhotos' => function($query) {
+            ->with(['village', 'district', 'city', 'heavyEquipment', 'assignmentUsers.user', 'fieldConditionPhotos' => function ($query) {
                 $query->latest()->take(1);
             }])
             ->get()
@@ -68,10 +68,10 @@ class GuestController extends Controller
                     'heavy_equipment' => [
                         'nomor_lambung' => $project->heavyEquipment->nomor_lambung ?? 'N/A'
                     ],
-                    'operators' => $project->assignmentUsers->where('role', 'operator')->map(function($au) {
+                    'operators' => $project->assignmentUsers->where('role', 'operator')->map(function ($au) {
                         return $au->user->name;
                     }),
-                    'helpers' => $project->assignmentUsers->where('role', 'helper')->map(function($au) {
+                    'helpers' => $project->assignmentUsers->where('role', 'helper')->map(function ($au) {
                         return $au->user->name;
                     })
                 ];
@@ -79,7 +79,7 @@ class GuestController extends Controller
 
         $ongoingProjectsMap = WorkAssignment::where('status', 'Sedang Berlangsung')
             ->whereYear('start_date', $selectedYear)
-            ->with(['village', 'district', 'city', 'heavyEquipment', 'assignmentUsers.user', 'fieldConditionPhotos' => function($query) {
+            ->with(['village', 'district', 'city', 'heavyEquipment', 'assignmentUsers.user', 'fieldConditionPhotos' => function ($query) {
                 $query->latest()->take(1);
             }])
             ->get()
@@ -96,10 +96,10 @@ class GuestController extends Controller
                     'heavy_equipment' => [
                         'nomor_lambung' => $project->heavyEquipment->nomor_lambung ?? 'N/A'
                     ],
-                    'operators' => $project->assignmentUsers->where('role', 'operator')->map(function($au) {
+                    'operators' => $project->assignmentUsers->where('role', 'operator')->map(function ($au) {
                         return $au->user->name;
                     }),
-                    'helpers' => $project->assignmentUsers->where('role', 'helper')->map(function($au) {
+                    'helpers' => $project->assignmentUsers->where('role', 'helper')->map(function ($au) {
                         return $au->user->name;
                     })
                 ];
@@ -132,19 +132,19 @@ class GuestController extends Controller
 
         $selectedYear = $request->input('year', date('Y'));
 
-        $completedProjects = WorkAssignment::with(['fieldConditionPhotos' => function($query) {
+        $completedProjects = WorkAssignment::with(['fieldConditionPhotos' => function ($query) {
             $query->latest()->take(1);
         }])
-        ->where('status', 'Selesai')
-        ->whereYear('start_date', $selectedYear)
-        ->get();
+            ->where('status', 'Selesai')
+            ->whereYear('start_date', $selectedYear)
+            ->get();
 
-        $ongoingProjects = WorkAssignment::with(['fieldConditionPhotos' => function($query) {
+        $ongoingProjects = WorkAssignment::with(['fieldConditionPhotos' => function ($query) {
             $query->latest()->take(1);
         }])
-        ->where('status', 'Sedang Berlangsung')
-        ->whereYear('start_date', $selectedYear)
-        ->get();
+            ->where('status', 'Sedang Berlangsung')
+            ->whereYear('start_date', $selectedYear)
+            ->get();
 
         $workTypes = WorkAssignment::distinct('tipe_pekerjaan')->pluck('tipe_pekerjaan')->toArray();
 
@@ -155,7 +155,7 @@ class GuestController extends Controller
     {
         $query = $request->input('query');
 
-        $projects = WorkAssignment::with(['city', 'district', 'village', 'fieldConditionPhotos' => function($q) {
+        $projects = WorkAssignment::with(['city', 'district', 'village', 'fieldConditionPhotos' => function ($q) {
             $q->latest()->take(1);
         }])
             ->where('project_name', 'like', "%$query%")
@@ -185,11 +185,16 @@ class GuestController extends Controller
                 'status' => $project->status,
                 'tipe_pekerjaan' => $project->tipe_pekerjaan,
                 'image_path' => $project->fieldConditionPhotos->isNotEmpty()
-                        ? asset($project->fieldConditionPhotos->first()->photo_path)
-                        : null
+                    ? asset($project->fieldConditionPhotos->first()->photo_path)
+                    : null
             ];
         });
 
         return response()->json($formattedProjects);
+    }
+
+    public function map()
+    {
+        return view('guest.map');
     }
 }
