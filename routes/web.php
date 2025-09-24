@@ -28,6 +28,7 @@ require __DIR__ . '/auth.php';
 Route::get('/', [GuestController::class, 'index'])->name('guest.index');
 Route::get('/project-maps', [GuestController::class, 'project_map_index'])->name('guest.project-map');
 Route::get('/project-map/search', [GuestController::class, 'search'])->name('guest.project-map.search');
+Route::get('/project-maps/map', [GuestController::class, 'map'])->name('guest.map');
 
 Route::get('/project-map/map', function () {
     return view('project-map.map');
