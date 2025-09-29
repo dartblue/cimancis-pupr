@@ -14,49 +14,105 @@
                         @method('PUT')
                         <div class="grid grid-cols-1 gap-6">
                             <div>
-                                <label for="nomor_lambung" class="block text-sm font-medium text-gray-700">Nomor Lambung <span class="text-red-500">*</span></label>
-                                <input type="text" name="nomor_lambung" id="nomor_lambung" value="{{ $heavyEquipment->nomor_lambung }}" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" required>
+                                <label for="nomor_lambung" class="block text-sm font-medium text-gray-700">Nomor Lambung
+                                    <span class="text-red-500">*</span></label>
+                                <input type="text" name="nomor_lambung" id="nomor_lambung"
+                                    value="{{ $heavyEquipment->nomor_lambung }}"
+                                    class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                                    required>
                             </div>
                             <div>
-                                <label for="name" class="block text-sm font-medium text-gray-700">Nama Kendaraan <span class="text-red-500">*</span></label>
-                                <input type="text" name="name" id="name" value="{{ $heavyEquipment->name }}" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" required>
+                                <label for="name" class="block text-sm font-medium text-gray-700">Nama Kendaraan
+                                    <span class="text-red-500">*</span></label>
+                                <input type="text" name="name" id="name" value="{{ $heavyEquipment->name }}"
+                                    class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                                    required>
                             </div>
                             <div>
-                                <label for="tahun" class="block text-sm font-medium text-gray-700">Tahun <span class="text-red-500">*</span></label>
-                                <input type="number" value="{{ $heavyEquipment->tahun }}" name="tahun" id="tahun" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" required>
+                                <label for="tahun" class="block text-sm font-medium text-gray-700">Tahun <span
+                                        class="text-red-500">*</span></label>
+                                <input type="number" value="{{ $heavyEquipment->tahun }}" name="tahun" id="tahun"
+                                    class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                                    required>
                             </div>
                             <div>
-                                <label for="merek" class="block text-sm font-medium text-gray-700">Merek <span class="text-red-500">*</span></label>
-                                <input type="text" value="{{ $heavyEquipment->merek  }}" name="merek" id="merek" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" required>
+                                <label for="merek" class="block text-sm font-medium text-gray-700">Merek <span
+                                        class="text-red-500">*</span></label>
+                                <input type="text" value="{{ $heavyEquipment->merek }}" name="merek" id="merek"
+                                    class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                                    required>
                             </div>
                             <div>
-                                <label for="status" class="block text-sm font-medium text-gray-700">Status <span class="text-red-500">*</span></label>
-                                <select name="status" id="status" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
-                                    <option value="beroperasi" {{ $heavyEquipment->status == 'beroperasi' ? 'selected' : '' }}>Beroperasi</option>
-                                    <option value="ready" {{ $heavyEquipment->status == 'ready' ? 'selected' : '' }}>Ready</option>
-                                    <option value="maintenance" {{ $heavyEquipment->status == 'maintenance' ? 'selected' : '' }}>Maintenance</option>
-                                    <option value="rusak" {{ $heavyEquipment->status == 'rusak' ? 'selected' : '' }}>Rusak</option>
+                                <label for="status" class="block text-sm font-medium text-gray-700">Status <span
+                                        class="text-red-500">*</span></label>
+                                <select name="status" id="status"
+                                    class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                    required>
+                                    <option value="beroperasi"
+                                        {{ $heavyEquipment->status == 'beroperasi' ? 'selected' : '' }}>Beroperasi
+                                    </option>
+                                    <option value="ready" {{ $heavyEquipment->status == 'ready' ? 'selected' : '' }}>
+                                        Ready</option>
+                                    <option value="maintenance"
+                                        {{ $heavyEquipment->status == 'maintenance' ? 'selected' : '' }}>Maintenance
+                                    </option>
+                                    <option value="rusak" {{ $heavyEquipment->status == 'rusak' ? 'selected' : '' }}>
+                                        Rusak</option>
                                 </select>
                             </div>
                             <div>
-                                <label for="kondisi" class="block text-sm font-medium text-gray-700">Kondisi <span class="text-red-500">*</span></label>
-                                <select name="kondisi" id="kondisi" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
-                                    <option value="baik" {{ $heavyEquipment->status == 'baik' ? 'selected' : '' }}>Baik</option>
-                                    <option value="rusak_ringan" {{ $heavyEquipment->status == 'rusak_ringan' ? 'selected' : '' }}>Rusak Ringan</option>
-                                    <option value="rusak_berat" {{ $heavyEquipment->status == 'rusak_berat' ? 'selected' : '' }}>Rusak Berat</option>
+                                <label for="kondisi" class="block text-sm font-medium text-gray-700">Kondisi <span
+                                        class="text-red-500">*</span></label>
+                                <select name="kondisi" id="kondisi"
+                                    class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                    required>
+                                    <option value="baik" {{ $heavyEquipment->status == 'baik' ? 'selected' : '' }}>
+                                        Baik</option>
+                                    <option value="rusak_ringan"
+                                        {{ $heavyEquipment->status == 'rusak_ringan' ? 'selected' : '' }}>Rusak Ringan
+                                    </option>
+                                    <option value="rusak_berat"
+                                        {{ $heavyEquipment->status == 'rusak_berat' ? 'selected' : '' }}>Rusak Berat
+                                    </option>
                                 </select>
                             </div>
                             <div>
-                                <label for="location" class="block text-sm font-medium text-gray-700">Lokasi Kendaraan <span class="text-red-500">*</span></label>
-                                <input type="text" value="{{ $heavyEquipment->location }}" name="location" id="location" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" required>
+                                <label for="location" class="block text-sm font-medium text-gray-700">Lokasi Kendaraan
+                                    <span class="text-red-500">*</span></label>
+                                <input type="text" value="{{ $heavyEquipment->location }}" name="location"
+                                    id="location"
+                                    class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                                    required>
                             </div>
                             <div>
-                                <label for="hours_meter" class="block text-sm font-medium text-gray-700">Hours Meter</label>
-                                <input type="text" value="{{ $heavyEquipment->hours_meter }}" name="hours_meter" id="hours_meter" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" >
+                                <label for="cartrack_vehicles" class="block text-sm font-medium text-gray-700">Cartrack
+                                    Vehicles
+                                    <span class="text-red-500">*</span></label>
+                                <select name="cartrack_vehicles" id="cartrack_vehicles"
+                                    class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                    required>
+                                    @forelse ($cartrackVehicles as $vehicle)
+                                        <option value="{{ $vehicle->id }}">
+                                            {{ $vehicle->registration . ' ' . $vehicle->manufacturer }}
+                                        </option>
+                                    @empty
+                                        <option value="baik"
+                                            {{ $heavyEquipment->status == 'baik' ? 'selected' : '' }}>
+                                            Baik</option>
+                                    @endforelse
+                                </select>
+                            </div>
+                            <div>
+                                <label for="hours_meter" class="block text-sm font-medium text-gray-700">Hours
+                                    Meter</label>
+                                <input type="text" value="{{ $heavyEquipment->hours_meter }}" name="hours_meter"
+                                    id="hours_meter"
+                                    class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
                             </div>
                         </div>
                         <div class="mt-6">
-                            <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            <button type="submit"
+                                class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                                 Update Alat Berat
                             </button>
                         </div>
@@ -65,4 +121,19 @@
             </div>
         </div>
     </div>
+
+    @push('styles')
+        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    @endpush
+
+    @push('scripts')
+        <script src="https://code.jquery.com/jquery-3.7.1.slim.min.js"
+            integrity="sha256-kmHvs0B+OpCW5GVHUNjv9rOmY0IvSIRcf7zGUDTDQM8=" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+        <script>
+            $(document).ready(function() {
+                $('#cartrack_vehicles').select2();
+            });
+        </script>
+    @endpush
 </x-app-layout>

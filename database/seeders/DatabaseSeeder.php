@@ -15,11 +15,18 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        // User::factory()->create([
+        //     'name' => 'Test User',
+        //     'email' => 'test@example.com',
+        // ]);
+
         // Panggil AdminUserSeeder
         $this->call(AdminUserSeeder::class);
+
+        // Panggil User Seeder
+        $this->call(UserSeeder::class);
+
+        // Panggil Heavy Equipment Seeder
+        $this->call(HeavyEquipmentSeeder::class);
     }
 }

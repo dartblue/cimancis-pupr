@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class HeavyEquipment extends Model
 {
     protected $table = 'heavy_equipments';
+
     protected $fillable = [
         'name',
         'nomor_lambung',

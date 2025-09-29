@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Vehicle;
+use App\Models\CartrackVehicle;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
 
@@ -13,7 +13,7 @@ class FetchVehiclesCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'fetch:vehicles';
+    protected $signature = 'fetch:cartrack-vehicles';
 
     /**
      * The console command description.
@@ -49,11 +49,13 @@ class FetchVehiclesCommand extends Command
                 $data = $response->json();
 
                 foreach ($data['data'] as $vehicle) {
-                    Vehicle::updateOrCreate(
+                    CartrackVehicle::updateOrCreate(
                         ['vehicle_id' => $vehicle['vehicle_id']],
                         [
                             'terminal_id'   => $vehicle['terminal_id'],
+                            'terminal_serial'   => $vehicle['terminal_serial'],
                             'registration'  => $vehicle['registration'],
+                            'vehicle_name'  => $vehicle['vehicle_name'],
                             'manufacturer'  => $vehicle['manufacturer'],
                             'model'         => $vehicle['model'],
                             'model_year'    => $vehicle['model_year'],
