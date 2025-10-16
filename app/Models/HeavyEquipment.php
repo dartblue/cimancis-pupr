@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class HeavyEquipment extends Model
 {
     protected $table = 'heavy_equipments';
+
     protected $fillable = [
         'name',
         'nomor_lambung',
@@ -35,5 +36,21 @@ class HeavyEquipment extends Model
     public function workAssignments()
     {
         return $this->hasMany(WorkAssignment::class);
+    }
+
+    public function integrations()
+    {
+        return $this->hasMany(HeavyEquipmentIntegration::class, 'heavy_equipment_id');
+    }
+
+    public function cartrackVehicles()
+    {
+        return $this->morphToMany(
+            CartrackVehicle::class,
+            'integratable',
+            'heavy_equipment_integrations',
+            'heavy_equipment_id',
+            'integratable_id'
+        );
     }
 }

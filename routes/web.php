@@ -1,20 +1,25 @@
 <?php
 
 use App\Models\Vehicle;
+use Carbon\CarbonInterval;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\MapController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\GuestController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\ProjectMapController;
 use App\Http\Controllers\HeavyEquipmentController;
 use App\Http\Controllers\OperatorHelperController;
 use App\Http\Controllers\WorkAssignmentController;
+use App\Http\Controllers\CartrackActivityController;
 use App\Http\Controllers\CompletedProjectController;
 use App\Http\Controllers\FieldConditionPhotoController;
+
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -31,8 +36,30 @@ Route::get('/project-map/search', [GuestController::class, 'search'])->name('gue
 Route::get('/project-maps/map', [GuestController::class, 'map'])->name('guest.map');
 
 Route::get('/project-map/map', function () {
+
+    $clockStart = $data['clock_start']; // 7868306 detik
+    $clockEnd   = $data['clock_end'];   // 7882638 detik
+
+    // Durasi pemakaian selama trip
+    $durationSeconds = $clockEnd - $clockStart;
+
+    // Pakai CarbonInterval (lebih rapi)
+    $duration = CarbonInterval::seconds($durationSeconds)->cascade()->forHumans();
+    // Output: "4 hours 45 minutes" misalnya
+
+
+    $idleSeconds = $data['idle_time_seconds']; // 14318
+
+    // Format ke HH:MM:SS
+    $idleFormatted = gmdate("H:i:s", $idleSeconds); // "03:58:38"
+
+    // Atau dengan CarbonInterval
+    $idleInterval = CarbonInterval::seconds($idleSeconds)->cascade()->forHumans();
+    // "3 hours 58 minutes"
     return view('project-map.map');
 });
+
+Route::get('/vehicles', [VehicleController::class, 'index']);
 
 Route::get('/tracking/data', function () {
     $vehicles = Vehicle::with(['positions' => function ($q) {
@@ -125,6 +152,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
         Route::get('/work-assignments', [WorkAssignmentController::class, 'apiIndex']);
         Route::get('/completed-projects', [CompletedProjectController::class, 'apiIndex']);
     });
+
+    Route::prefix('cartrack-activity')->group(function () {
+        Route::get('/', [CartrackActivityController::class, 'index'])->name('cartrack-activity.index');
+    });
 });
 
 Route::get('/api/equipment-usage-history', [DashboardController::class, 'getEquipmentUsageHistory'])
@@ -134,3 +165,6 @@ Route::get('/api/hours-meter-history/{id}', [HeavyEquipmentController::class, 'g
     ->name('api.hours-meter-history');
 Route::get('/api/equipment-tracking/{id}', [HeavyEquipmentController::class, 'getTrackingData'])
     ->name('api.equipment-tracking');
+
+Route::get('/api/cartrack-vehicles', [CartrackActivityController::class, 'getCartrackVehicles'])
+    ->name('api.cartrack-vehicles');
