@@ -37,4 +37,20 @@ class HeavyEquipment extends Model
     {
         return $this->hasMany(WorkAssignment::class);
     }
+
+    public function integrations()
+    {
+        return $this->hasMany(HeavyEquipmentIntegration::class, 'heavy_equipment_id');
+    }
+
+    public function cartrackVehicles()
+    {
+        return $this->morphToMany(
+            CartrackVehicle::class,
+            'integratable',
+            'heavy_equipment_integrations',
+            'heavy_equipment_id',
+            'integratable_id'
+        );
+    }
 }

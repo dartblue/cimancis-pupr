@@ -39,6 +39,9 @@ class FetchCartrackVehicleActivityCommand extends Command
             $startDate = $yesterday->startOfDay()->format('Y-m-d H:i:s');
             $endDate   = $yesterday->endOfDay()->format('Y-m-d H:i:s');
 
+            // $startDate = '2025-10-01 00:00:00';
+            // $endDate   = '2025-10-03 23:59:59';
+
             do {
                 $response = Http::withHeaders([
                     'Authorization' => 'Basic ' . config('services.cartrack.token'),
@@ -68,19 +71,15 @@ class FetchCartrackVehicleActivityCommand extends Command
                             'end_location'                  => $trip['end_location'] ?? null,
                             'start_odometer'                => $trip['start_odometer'] ?? null,
                             'end_odometer'                  => $trip['end_odometer'] ?? null,
+                            'trip_distance'                 => $trip['trip_distance'] ?? null,
                             'max_speed'                     => $trip['max_speed'] ?? null,
                             'idle_time'                     => $trip['idle_time'] ?? null,
                             'idle_time_seconds'             => $trip['idle_time_seconds'] ?? null,
                             'events_idle'                   => $trip['events_idle'] ?? null,
-                            'start_coordinates_latitude'    => $trip['start_coordinates_latitude'] ?? null,
-                            'start_coordinates_longitude'   => $trip['start_coordinates_longitude'] ?? null,
-                            'end_coordinates_latitude'      => $trip['end_coordinates_latitude'] ?? null,
-                            'end_coordinates_longitude'     => $trip['end_coordinates_longitude'] ?? null,
-                            'trip_distance'                 => $trip['trip_distance'] ?? null,
-                            'start_latitude'                => $trip['start_coordinates']['latitude'] ?? null,
-                            'start_longitude'               => $trip['start_coordinates']['longitude'] ?? null,
-                            'end_latitude'                  => $trip['end_coordinates']['latitude'] ?? null,
-                            'end_longitude'                 => $trip['end_coordinates']['longitude'] ?? null,
+                            'start_coordinates_latitude'    => $trip['start_coordinates']['latitude'] ?? null,
+                            'start_coordinates_longitude'   => $trip['start_coordinates']['longitude'] ?? null,
+                            'end_coordinates_latitude'      => $trip['end_coordinates']['latitude'] ?? null,
+                            'end_coordinates_longitude'     => $trip['end_coordinates']['longitude'] ?? null,
                         ]
                     );
                 }

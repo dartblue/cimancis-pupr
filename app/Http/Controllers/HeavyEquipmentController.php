@@ -31,7 +31,8 @@ class HeavyEquipmentController extends Controller
 
     public function create()
     {
-        return view('heavy_equipments.create');
+        $cartrackVehicles = CartrackVehicle::all();
+        return view('heavy_equipments.create', compact('cartrackVehicles'));
     }
 
     public function store(Request $request)

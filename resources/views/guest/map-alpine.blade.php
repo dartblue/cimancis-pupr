@@ -1,5 +1,5 @@
 <x-cartrack-layout>
-    <div class="flex h-screen" x-data="trackingMap()" x-init="initPageCartrack()">
+    <div class="flex h-screen" x-data="trackingMap()" x-init="initMap()">
         <!-- Sidebar -->
         <aside class="w-96 h-full bg-white border-r p-4 overflow-y-auto">
             <x-text-input class="mb-4" id="vehilce-search" x-model="searchQuery" placeholder="Cari kendaraan..." />
@@ -10,9 +10,7 @@
                 <template x-for="vehicle in filteredVehicles" :key="vehicle.vehicle_id">
                     <li class="p-3 rounded border bg-gray-50 hover:bg-gray-100 cursor-pointer"
                         @click="showDetail(vehicle)" @hover="alert('hover')">
-                        <div class="font-semibold"
-                            x-text="vehicle.heavy_equipment.length > 0 ? vehicle.heavy_equipment[0].name : vehicle.manufacturer + ' ' +vehicle.model + ' ' + vehicle.model_year + ' ' + vehicle.colour">
-                        </div>
+                        <div class="font-semibold" x-text="vehicle.registration"></div>
                         <div class="text-xs text-gray-600" x-text="formatLatLon(vehicle)"></div>
                     </li>
                 </template>
@@ -180,27 +178,14 @@
                     polylines: {},
                     searchQuery: '',
                     tab: 'semua',
-                    startDate: new Date().setDate(new Date().getDate() - 7),
-                    endDate: new Date(),
 
                     get filteredVehicles() {
                         if (!this.searchQuery) return this.vehicles;
                         const q = this.searchQuery.toLowerCase();
-
-                        return this.vehicles.filter(v => {
-                            // gabungkan semua field yang relevan untuk pencarian
-                            const searchable = [
-                                v.registration,
-                                v.vehicle_id,
-                                v.manufacturer,
-                                v.model,
-                                v.model_year,
-                                v.colour,
-                                v.heavy_equipment?.length > 0 ? v.heavy_equipment[0].name : null
-                            ].filter(Boolean).join(" ").toLowerCase();
-
-                            return searchable.includes(q);
-                        });
+                        return this.vehicles.filter(v =>
+                            (v.registration && v.registration.toLowerCase().includes(q)) ||
+                            (v.vehicle_id && String(v.vehicle_id).includes(q))
+                        );
                     },
 
                     totalDistance(positions) {
@@ -230,16 +215,21 @@
                         return `${minutes} menit`;
                     },
 
-                    initPageCartrack() {
-                        this.initMap();
+                    initMap() {
+                        this.map = L.map('map').setView([-6.200000, 106.816666], 12);
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            maxZoom: 19,
+                        }).addTo(this.map);
+
+                        this.loadData();
 
                         // inisialisasi flatpickr
                         flatpickr("#dateRangeInput", {
                             mode: "range",
                             dateFormat: "Y-m-d",
                             defaultDate: [
-                                this.startDate,
-                                this.endDate
+                                new Date().setDate(new Date().getDate() - 7),
+                                new Date()
                             ],
                             onChange: function(selectedDates, dateStr, instance) {
                                 // Kalau sudah pilih 2 tanggal (start & end)
@@ -247,56 +237,36 @@
                                     const startDate = selectedDates[0].toISOString().split("T")[0];
                                     const endDate = selectedDates[1].toISOString().split("T")[0];
 
-                                    // alert(`Kamu memilih range:\nStart: ${startDate}\nEnd: ${endDate}`);
-                                    console.log(
-                                        `Kamu memilih range:\nStart: ${startDate}\nEnd: ${endDate}\nVehicle: ${this.detailVehicle?.vehicle_id}`
-                                        );
-
+                                    alert(`Kamu memilih range:\nStart: ${startDate}\nEnd: ${endDate}`);
                                 }
                             }
                         });
                     },
 
-                    initMap() {
-                        this.map = L.map('map').setView([-6.733742, 108.530256], 13);
-                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                            maxZoom: 19,
-                        }).addTo(this.map);
-
-                        this.loadData();
-                    },
-
                     async loadData() {
-                        const res = await fetch('/api/cartrack-vehicles');
+                        const res = await fetch('/tracking/data');
                         this.vehicles = await res.json();
 
                         this.vehicles.forEach(v => {
+                            if (!v.positions?.length) return;
 
-                            if (!v.latest_activity) return;
-
-                            const lastLat = parseFloat(v.latest_activity.end_coordinates_latitude ?? v
-                                .latest_activity
-                                .start_coordinates_latitude);
-                            const lastLon = parseFloat(v.latest_activity.end_coordinates_longitude ?? v
-                                .latest_activity
-                                .start_coordinates_longitude);
+                            const last = v.positions[v.positions.length - 1];
+                            const lastLat = parseFloat(last.end_latitude ?? last.start_latitude);
+                            const lastLon = parseFloat(last.end_longitude ?? last.start_longitude);
 
                             // marker
                             if (!this.markers[v.vehicle_id]) {
                                 this.markers[v.vehicle_id] = L.marker([lastLat, lastLon], {
                                         icon: this.getCarIcon()
                                     }).addTo(this.map)
-                                    .bindPopup(
-                                        `<b>${v.heavy_equipment.length > 0 ? v.heavy_equipment[0].name : v.manufacturer}</b><br>Lat: ${lastLat}<br>Lon: ${lastLon}`
-                                    )
+                                    .bindPopup(`<b>${v.registration}</b><br>Lat: ${lastLat}<br>Lon: ${lastLon}`)
                                     .on('click', () => {
                                         this.showDetail(v);
                                     });
                             } else {
                                 this.markers[v.vehicle_id].setLatLng([lastLat, lastLon])
                                     .setPopupContent(
-                                        `<b>${v.heavy_equipment.length > 0 ? v.heavy_equipment[0].name : v.manufacturer}</b><br>Lat: ${lastLat}<br>Lon: ${lastLon}`
-                                    )
+                                        `<b>${v.registration}</b><br>Lat: ${lastLat}<br>Lon: ${lastLon}`)
                                     .on('click', () => {
                                         this.showDetail(v);
                                     });
@@ -361,9 +331,11 @@
                     },
 
                     formatLatLon(v) {
-                        if (!v.latest_activity) return "";
-
-                        return ` ${v.latest_activity.end_location}`;
+                        if (!v.positions?.length) return "";
+                        const last = v.positions[v.positions.length - 1];
+                        const lat = parseFloat(last.end_latitude ?? last.start_latitude);
+                        const lon = parseFloat(last.end_longitude ?? last.start_longitude);
+                        return `Lat: ${lat.toFixed(5)} | Lon: ${lon.toFixed(5)}`;
                     },
 
                     getCarIcon() {

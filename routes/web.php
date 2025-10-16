@@ -1,22 +1,23 @@
 <?php
 
 use App\Models\Vehicle;
+use Carbon\CarbonInterval;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\MapController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\GuestController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\ProjectMapController;
 use App\Http\Controllers\HeavyEquipmentController;
 use App\Http\Controllers\OperatorHelperController;
 use App\Http\Controllers\WorkAssignmentController;
+use App\Http\Controllers\CartrackActivityController;
 use App\Http\Controllers\CompletedProjectController;
 use App\Http\Controllers\FieldConditionPhotoController;
-use App\Http\Controllers\VehicleController;
-use Carbon\CarbonInterval;
 
 
 /*
@@ -151,6 +152,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
         Route::get('/work-assignments', [WorkAssignmentController::class, 'apiIndex']);
         Route::get('/completed-projects', [CompletedProjectController::class, 'apiIndex']);
     });
+
+    Route::prefix('cartrack-activity')->group(function () {
+        Route::get('/', [CartrackActivityController::class, 'index'])->name('cartrack-activity.index');
+    });
 });
 
 Route::get('/api/equipment-usage-history', [DashboardController::class, 'getEquipmentUsageHistory'])
@@ -160,3 +165,6 @@ Route::get('/api/hours-meter-history/{id}', [HeavyEquipmentController::class, 'g
     ->name('api.hours-meter-history');
 Route::get('/api/equipment-tracking/{id}', [HeavyEquipmentController::class, 'getTrackingData'])
     ->name('api.equipment-tracking');
+
+Route::get('/api/cartrack-vehicles', [CartrackActivityController::class, 'getCartrackVehicles'])
+    ->name('api.cartrack-vehicles');
