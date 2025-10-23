@@ -9,40 +9,22 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
                 <div class="p-6 sm:p-8">
-                    <form action="#" method="GET" class="mb-8">
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <label for="last_sync" class="block text-sm font-medium text-gray-700 mb-2">Sinkronisasi
-                                    Terakhir
-                                </label>
-                                <input type="text" name="last_sync" id="last_sync"
-                                    value="{{ $last_sync->diffForHumans() }}"
-                                    class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                                    readonly>
-                                <input type="hidden" name="last_sync_raw" id="last_sync_raw"
-                                    value="{{ $last_sync }}">
-                            </div>
-                            <div class="flex items-end">
-                                <button type="button"
-                                    class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md transition duration-150 ease-in-out">
-                                    Sinkronisasi Data
-                                </button>
-                            </div>
-                        </div>
-                    </form>
 
-                    {{--  --}}
                     <div class="flex justify-between items-center mb-6">
-                        <h3 class="text-lg leading-6 font-medium text-gray-900">Hasil Laporan</h3>
-                        <a href="{{ route('laporan.export', request()->all()) }}"
+                        <div>
+                            <h3 class="text-lg leading-6 font-medium text-gray-900">Sinkronisasi Terakhir</h3>
+                            <p>{{ $last_sync->format('d-M-Y') }} ({{ $last_sync->diffForHumans() }})</p>
+                            <input type="hidden" name="last_sync_raw" id="last_sync_raw" value="{{ $last_sync }}">
+                        </div>
+                        <button type="button"
                             class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
                             <svg class="mr-2 -ml-1 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none"
                                 viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
-                            Export Excel
-                        </a>
+                            Sinkronisasi Data
+                        </button>
                     </div>
 
                     {{-- Table --}}
@@ -55,25 +37,25 @@
                                         No.</th>
                                     <th scope="col"
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Nama Pekerjaan</th>
+                                        Trip ID</th>
                                     <th scope="col"
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        No Lambung</th>
+                                        Kendaraan Berat</th>
                                     <th scope="col"
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Alat yang Digunakan</th>
+                                        Cartrack Vehicle</th>
                                     <th scope="col"
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Waktu Pengerjaan</th>
+                                        Lokasi Awal</th>
                                     <th scope="col"
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Tipe Pekerjaan</th>
+                                        Lokasi Akhir</th>
                                     <th scope="col"
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Lokasi</th>
-                                    <th scope="col"
+                                        Durasi Trip</th>
+                                    <th
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Status</th>
+                                        Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
@@ -102,6 +84,29 @@
                     syncButton.disabled = true;
                     syncButton.textContent = 'Menyinkronkan...';
 
+                    fetch('/api/sync-cartrack-activity', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify({
+                                last_sync: lastSync
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            alert(data.message);
+                            console.log(data);
+
+                            // location.reload();
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('Terjadi kesalahan saat menyinkronkan data.');
+                            syncButton.disabled = false;
+                            syncButton.textContent = 'Sinkronisasi Data';
+                        });
 
                 });
             });

@@ -39,8 +39,8 @@ class FetchCartrackVehicleActivityCommand extends Command
             $startDate = $yesterday->startOfDay()->format('Y-m-d H:i:s');
             $endDate   = $yesterday->endOfDay()->format('Y-m-d H:i:s');
 
-            // $startDate = '2025-10-01 00:00:00';
-            // $endDate   = '2025-10-03 23:59:59';
+            // $startDate = '2025-10-03 00:00:00';
+            // $endDate   = '2025-10-18 23:59:59';
 
             do {
                 $response = Http::withHeaders([

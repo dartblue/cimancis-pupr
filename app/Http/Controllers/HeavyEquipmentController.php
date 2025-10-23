@@ -6,6 +6,7 @@ use App\Models\AttendanceLog;
 use App\Models\CartrackVehicle;
 use Illuminate\Http\Request;
 use App\Models\HeavyEquipment;
+use App\Models\HeavyEquipmentIntegration;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -31,7 +32,7 @@ class HeavyEquipmentController extends Controller
 
     public function create()
     {
-        $cartrackVehicles = CartrackVehicle::all();
+        $cartrackVehicles = CartrackVehicle::whereDoesntHave('heavyEquipment')->get();
         return view('heavy_equipments.create', compact('cartrackVehicles'));
     }
 
@@ -50,9 +51,18 @@ class HeavyEquipmentController extends Controller
             'current_latitude' => 'nullable|numeric',
             'current_longitude' => 'nullable|numeric',
             'hours_meter'  => 'nullable|numeric',
+            'cartrack_vehicles' => 'nullable|exists:cartrack_vehicles,id',
         ]);
 
-        HeavyEquipment::create($validatedData);
+        $heavyEquipment = HeavyEquipment::create($validatedData);
+
+        if ($request->filled('cartrack_vehicles')) {
+            HeavyEquipmentIntegration::create([
+                'heavy_equipment_id' => $heavyEquipment->id,
+                'integratable_id' => $validatedData['cartrack_vehicles'],
+                'integratable_type' => CartrackVehicle::class,
+            ]);
+        }
 
         return redirect()->route('alat-berat.index')->with('success', 'Alat berat berhasil ditambahkan.');
     }
@@ -104,7 +114,11 @@ class HeavyEquipmentController extends Controller
         }
 
         $heavyEquipment->load('workAssignments.city', 'workAssignments.district');
-        $cartrackVehicles = CartrackVehicle::all();
+        $cartrackVehicles = CartrackVehicle::whereDoesntHave('heavyEquipment')
+            ->orWhereHas('heavyEquipment', function ($query) use ($heavyEquipment) {
+                $query->where('heavy_equipment_id', $heavyEquipment->id);
+            })
+            ->get();
         return view('heavy_equipments.edit', compact('heavyEquipment', 'cartrackVehicles'));
     }
 
@@ -142,6 +156,16 @@ class HeavyEquipmentController extends Controller
             'location' => $validatedData['location'],
             'hours_meter' => $validatedData['hours_meter'],
         ]);
+
+        if ($request->filled('cartrack_vehicles')) {
+            $heavyEquipment->integrations()->delete();
+
+            HeavyEquipmentIntegration::create([
+                'heavy_equipment_id' => $heavyEquipment->id,
+                'integratable_id' => $request->input('cartrack_vehicles'),
+                'integratable_type' => CartrackVehicle::class,
+            ]);
+        }
 
         return redirect()->route('alat-berat.index')->with('success', 'Alat berat berhasil diperbarui.');
     }

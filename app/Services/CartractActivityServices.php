@@ -2,4 +2,7 @@
 
 namespace App\Services;
 
-class CartractActivityServices {}
+class CartractActivityServices
+{
+    public function fetchCartractActivities() {}
+}
