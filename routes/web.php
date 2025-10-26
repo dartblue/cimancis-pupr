@@ -168,3 +168,8 @@ Route::get('/api/equipment-tracking/{id}', [HeavyEquipmentController::class, 'ge
 
 Route::get('/api/cartrack-vehicles', [CartrackActivityController::class, 'getCartrackVehicles'])
     ->name('api.cartrack-vehicles');
+
+Route::post('/api/cartrack-activities', [CartrackActivityController::class, 'cartrackActivities']);
+
+Route::post('/api/sync-cartrack-activity', [CartrackActivityController::class, 'syncCartrackActivity'])
+    ->name('api.sync-cartrack-activity');

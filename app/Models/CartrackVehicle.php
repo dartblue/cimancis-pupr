@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CartrackVehicle extends Model
@@ -38,13 +39,13 @@ class CartrackVehicle extends Model
     ];
 
     /**
-     * Get the cartrackVehicleActivity that owns the CartrackVehicle
+     * Get the cartrackVehicleActivity associated with the CartrackVehicle
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
-    public function cartrackVehicleActivity(): BelongsTo
+    public function cartrackVehicleActivity(): HasMany
     {
-        return $this->belongsTo(CartrackVehicleActivity::class, 'foreign_key', 'other_key');
+        return $this->hasMany(CartrackVehicleActivity::class, 'cartrack_vehicle_id', 'vehicle_id');
     }
 
     /**

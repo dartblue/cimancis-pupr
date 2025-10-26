@@ -92,13 +92,13 @@
                                     class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                                     required>
                                     @forelse ($cartrackVehicles as $vehicle)
-                                        <option value="{{ $vehicle->id }}">
+                                        <option value="{{ $vehicle->id }}"
+                                            {{ $heavyEquipment->cartrack_vehicle_id == $vehicle->id ? 'selected' : '' }}>
                                             {{ $vehicle->registration . ' ' . $vehicle->manufacturer }}
                                         </option>
                                     @empty
-                                        <option value="baik"
-                                            {{ $heavyEquipment->status == 'baik' ? 'selected' : '' }}>
-                                            Baik</option>
+                                        <option value="">
+                                            Tidak Ada Kendaraan</option>
                                     @endforelse
                                 </select>
                             </div>
@@ -121,19 +121,4 @@
             </div>
         </div>
     </div>
-
-    @push('styles')
-        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    @endpush
-
-    @push('scripts')
-        <script src="https://code.jquery.com/jquery-3.7.1.slim.min.js"
-            integrity="sha256-kmHvs0B+OpCW5GVHUNjv9rOmY0IvSIRcf7zGUDTDQM8=" crossorigin="anonymous"></script>
-        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-        <script>
-            $(document).ready(function() {
-                $('#cartrack_vehicles').select2();
-            });
-        </script>
-    @endpush
 </x-app-layout>

@@ -10,21 +10,20 @@
     <meta http-equiv="Expires" content="0">
     <title>{{ config('app.name', 'Laravel') }}</title>
     <link rel="icon" type="image/x-icon" href="{{ asset('assets/img/logo.ico') }}">
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
     <!-- Styles -->
     {{-- <link rel="stylesheet" href="{{ asset('css/app.css') }}?v={{ time() }}"> --}}
     @vite('resources/css/app.css')
-    {{-- <link rel="stylesheet" href="{{ asset('css/additional.css') }}"> --}}
-    {{-- <script src="https://cdn.tailwindcss.com"></script> --}}
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    @stack('styles')
+
     <style>
         [x-cloak] {
             display: none;
         }
     </style>
+    @stack('styles')
 </head>
 
 <body class="font-sans antialiased">

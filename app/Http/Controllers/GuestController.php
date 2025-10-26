@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CartrackVehicle;
 use App\Models\HeavyEquipment;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -196,5 +197,12 @@ class GuestController extends Controller
     public function map()
     {
         return view('guest.map');
+    }
+
+    public function project_map_data(Request $request)
+    {
+        $cartrack_vehicles = CartrackVehicle::all();
+
+        return response()->json($cartrack_vehicles);
     }
 }

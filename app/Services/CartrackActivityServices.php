@@ -1,46 +1,30 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Services;
 
 use Carbon\Carbon;
-use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
 use App\Models\CartrackVehicleActivity;
 
-class FetchCartrackVehicleActivityCommand extends Command
+class CartrackActivityServices
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'fetch:cartrack-vehicles-activities';
+    public function fetchCartrackActivities() {}
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Fetch list trip dari Cartrack API dan simpan ke database';
-
-    /**
-     * Execute the console command.
-     */
-    public function handle()
+    public function syncCartrackActivities($input)
     {
-        //
-        $this->info('Mulai fetch data kendaraan dari Cartrack...');
+        if (!isset($input['last_sync'])) {
+            return [
+                'success' => false,
+                'status' => 'error',
+                'message' => 'Parameter last_sync diperlukan.',
+            ];
+        }
+
+        $startDate = date('Y-m-d H:i:s', strtotime($input['last_sync'] . ' 00:00:00'));
+        $endDate = now()->endOfDay()->format('Y-m-d H:i:s');
 
         try {
             $page = 1;
-
-            $yesterday = now()->subDay();
-
-            $startDate = $yesterday->startOfDay()->format('Y-m-d H:i:s');
-            $endDate   = $yesterday->endOfDay()->format('Y-m-d H:i:s');
-
-            // $startDate = '2025-10-03 00:00:00';
-            // $endDate   = '2025-10-18 23:59:59';
 
             do {
                 $response = Http::withHeaders([
@@ -52,8 +36,11 @@ class FetchCartrackVehicleActivityCommand extends Command
                 ]);
 
                 if ($response->failed()) {
-                    $this->error('Gagal fetch data dari Cartrack: ' . $response->body());
-                    return Command::FAILURE;
+                    return [
+                        'success' => false,
+                        'status' => 'error',
+                        'message' => 'Gagal fetch data dari Cartrack: ' . $response->body(),
+                    ];
                 }
 
                 $data = $response->json();
@@ -84,17 +71,20 @@ class FetchCartrackVehicleActivityCommand extends Command
                     );
                 }
 
-                $this->info("Page {$page} selesai diproses...");
-
                 $page++;
                 $lastPage = $data['meta']['last_page'] ?? 1;
             } while ($page <= $lastPage);
-
-            $this->info('Selesai sync semua kendaraan 🚗');
-            return Command::SUCCESS;
+            return [
+                'success' => true,
+                'status' => 'success',
+                'message' => 'Cartrack activities synced successfully.',
+            ];
         } catch (\Exception $e) {
-            $this->error('Error: ' . $e->getMessage());
-            return Command::FAILURE;
+            return [
+                'success' => false,
+                'status' => 'error',
+                'message' => 'Terjadi kesalahan saat menyinkronkan data: ' . $e->getMessage(),
+            ];
         }
     }
 }
