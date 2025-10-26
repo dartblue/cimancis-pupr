@@ -13,8 +13,10 @@
                     <div class="flex justify-between items-center mb-6">
                         <div>
                             <h3 class="text-lg leading-6 font-medium text-gray-900">Sinkronisasi Terakhir</h3>
-                            <p>{{ $last_sync->format('d-M-Y') }} ({{ $last_sync->diffForHumans() }})</p>
-                            <input type="hidden" name="last_sync_raw" id="last_sync_raw" value="{{ $last_sync }}">
+                            <p>{{ Carbon\Carbon::parse($last_sync)->format('d-M-Y') }}
+                                ({{ Carbon\Carbon::parse($last_sync)->diffForHumans() }})</p>
+                            <input type="hidden" name="last_sync_raw" id="last_sync_raw"
+                                value="{{ Carbon\Carbon::parse($last_sync)->format('Y-m-d') }}">
                         </div>
                         <button type="button"
                             class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
@@ -59,14 +61,41 @@
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
-
+                                @forelse ($cartrack_activities as $key => $item)
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm">{{ $key + 1 }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm">{{ $item->trip_id }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                            <a href="#"
+                                                class="text-blue-600 hover:text-blue-800 hover:underline transition-colors duration-200">
+                                                Item
+                                            </a>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                            -
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm">{{ $item->start_location }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                            {{ $item->end_location ?? '-' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <a href="#"
+                                                class="text-indigo-600 hover:text-indigo-900 mr-2">Lihat</a>
+                                            <a href="#" class="text-green-600 hover:text-green-900 mr-2">Edit</a>
+                                            <button class="text-red-600 hover:text-red-900">Hapus</button>
+                                        </td>
+                                    </tr>
+                                @empty
+                                @endforelse
                             </tbody>
                         </table>
                     </div>
 
                     {{-- Pagination --}}
                     <div class="mt-6">
-                        {{-- {{ $workAssignments->links() }} --}}
+                        {{ $cartrack_activities->links() }}
                     </div>
                 </div>
             </div>
@@ -76,8 +105,7 @@
     @push('scripts')
         <script>
             document.addEventListener('DOMContentLoaded', function() {
-                const lastSyncInput = document.getElementById('last_sync_raw');
-                const lastSync = new Date(lastSyncInput.value);
+                const lastSyncInput = document.getElementById('last_sync_raw').value;
 
                 const syncButton = document.querySelector('button[type="button"]');
                 syncButton.addEventListener('click', function() {
@@ -88,18 +116,21 @@
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')
+                                    .getAttribute(
+                                        'content')
                             },
                             body: JSON.stringify({
-                                last_sync: lastSync
+                                last_sync: lastSyncInput
                             })
                         })
                         .then(response => response.json())
                         .then(data => {
                             alert(data.message);
                             console.log(data);
-
-                            // location.reload();
+                            syncButton.disabled = false;
+                            syncButton.textContent = 'Sinkronisasi Data';
+                            location.reload();
                         })
                         .catch(error => {
                             console.error('Error:', error);

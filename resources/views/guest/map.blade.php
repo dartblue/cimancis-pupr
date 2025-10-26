@@ -164,6 +164,59 @@
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
             integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+        <style>
+            .custom-div-icon {
+                background: transparent;
+                border: none;
+            }
+
+            .marker-pin {
+                width: 30px;
+                height: 30px;
+                border-radius: 50% 50% 50% 0;
+                position: absolute;
+                transform: rotate(-45deg);
+                left: 50%;
+                top: 50%;
+                margin: -15px 0 0 -15px;
+            }
+
+            .marker-pin::after {
+                content: '';
+                width: 24px;
+                height: 24px;
+                margin: 3px 0 0 3px;
+                background: #fff;
+                position: absolute;
+                border-radius: 50%;
+            }
+
+            .custom-div-icon i {
+                position: absolute;
+                width: 22px;
+                font-size: 14px;
+                left: 0;
+                right: 0;
+                margin: 10px auto;
+                text-align: center;
+            }
+
+            .marker-pin.completed {
+                background: #4CAF50;
+            }
+
+            .marker-pin.ongoing {
+                background: #FFA500;
+            }
+
+            .custom-div-icon i.fa-check {
+                color: #4CAF50;
+            }
+
+            .custom-div-icon i.fa-clock {
+                color: #FFA500;
+            }
+        </style>
     @endpush
 
     @push('scripts')
@@ -250,7 +303,7 @@
                                     // alert(`Kamu memilih range:\nStart: ${startDate}\nEnd: ${endDate}`);
                                     console.log(
                                         `Kamu memilih range:\nStart: ${startDate}\nEnd: ${endDate}\nVehicle: ${this.detailVehicle?.vehicle_id}`
-                                        );
+                                    );
 
                                 }
                             }
@@ -304,59 +357,76 @@
                         });
                     },
 
-                    showDetail(vehicle) {
+                    async showDetail(vehicle) {
                         this.detailVehicle = vehicle;
 
                         this.tab = 'semua';
 
-                        // Hari ini
-                        const endDate = new Date();
-
-                        // Seminggu kebelakang
-                        const startDate = new Date();
-                        startDate.setDate(endDate.getDate() - 7);
-
                         // Format ke YYYY-MM-DD (misalnya untuk query param API)
                         const formatDate = (date) => {
-                            return date.toISOString().split("T")[0];
+                            const year = date.getFullYear();
+                            const month = String(date.getMonth() + 1).padStart(2, '0');
+                            const day = String(date.getDate()).padStart(2, '0');
+
+                            return `${year}-${month}-${day}`;
                         };
 
                         const params = {
-                            startDate: formatDate(startDate),
-                            endDate: formatDate(endDate),
+                            startDate: formatDate(new Date(this.startDate)),
+                            endDate: formatDate(new Date(this.endDate)),
                         };
 
-                        console.log(params);
-                        // { startDate: "2025-09-21", endDate: "2025-09-28" }
+                        try {
 
-
-                        // hapus semua polyline lama
-                        for (const vehicleId in this.polylines) {
-                            if (this.polylines[vehicleId]) this.polylines[vehicleId].remove();
-                        }
-
-                        // buat polyline perjalanan kendaraan yang dipilih
-                        const coords = [];
-                        vehicle.positions.forEach(p => {
-                            if (p.start_latitude && p.start_longitude) {
-                                coords.push([parseFloat(p.start_latitude), parseFloat(p.start_longitude)]);
-                            }
-                            if (p.end_latitude && p.end_longitude) {
-                                coords.push([parseFloat(p.end_latitude), parseFloat(p.end_longitude)]);
-                            }
-                        });
-
-                        if (coords.length > 0) {
-                            const color = this.getColorForVehicle(vehicle.vehicle_id);
-                            this.polylines[vehicle.vehicle_id] = L.polyline(coords, {
-                                color: color,
-                                weight: 3
-                            }).addTo(this.map);
-
-                            const last = coords[coords.length - 1];
-                            this.map.setView(last, 15, {
-                                animate: true
+                            const res = await fetch('/api/cartrack-activities', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
+                                        'content')
+                                },
+                                body: JSON.stringify({
+                                    vehicleId: vehicle.vehicle_id,
+                                    ...params
+                                })
                             });
+
+                            const data = await res.json();
+                            console.log(data);
+
+                            // hapus semua polyline lama
+                            for (const vehicleId in this.polylines) {
+                                if (this.polylines[vehicleId]) this.polylines[vehicleId].remove();
+                            }
+
+                            // buat polyline perjalanan kendaraan yang dipilih
+                            const coords = [];
+                            data.forEach(p => {
+                                if (p.start_coordinates_latitude && p.start_coordinates_longitude) {
+                                    coords.push([parseFloat(p.start_coordinates_latitude), parseFloat(p
+                                        .start_coordinates_longitude)]);
+                                }
+                                if (p.end_coordinates_latitude && p.end_coordinates_longitude) {
+                                    coords.push([parseFloat(p.end_coordinates_latitude), parseFloat(p
+                                        .end_coordinates_longitude)]);
+                                }
+                            });
+
+                            if (coords.length > 0) {
+                                const color = this.getColorForVehicle(vehicle.vehicle_id);
+                                this.polylines[vehicle.vehicle_id] = L.polyline(coords, {
+                                    color: color,
+                                    weight: 3
+                                }).addTo(this.map);
+
+                                const last = coords[coords.length - 1];
+                                this.map.setView(last, 15, {
+                                    animate: true
+                                });
+                            }
+
+                        } catch (error) {
+                            console.log(error);
                         }
                     },
 
@@ -367,11 +437,11 @@
                     },
 
                     getCarIcon() {
-                        return L.icon({
-                            iconUrl: "https://cdn-icons-png.flaticon.com/512/61/61168.png",
-                            iconSize: [32, 32],
-                            iconAnchor: [16, 16],
-                            popupAnchor: [0, -16]
+                        return L.divIcon({
+                            className: 'custom-div-icon',
+                            html: "<div class='marker-pin completed'></div><i class='fas fa-check'></i>",
+                            iconSize: [30, 42],
+                            iconAnchor: [15, 42]
                         });
                     },
 
