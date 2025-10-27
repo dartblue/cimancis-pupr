@@ -23,12 +23,13 @@
         <aside class="hidden w-96 h-full bg-white border-r p-2 overflow-y-auto" :class="{ 'hidden': !detailVehicle }">
             <div class="p-2 border-b flex justify-between items-center">
                 <h2 class="font-semibold text-md">Detail Kendaraan</h2>
-                <button class="text-slate-500 hover:text-slate-700" @click="detailVehicle = null">✕</button>
+                <button class="text-slate-500 hover:text-slate-700"
+                    @click="detailVehicle = null; currentVehicle = null">✕</button>
             </div>
             <div class="flex flex-col border-b p-2">
-                <span x-text="detailVehicle?.registration"></span>
+                <span x-text="currentVehicle?.registration"></span>
                 <span class="text-xs"
-                    x-text="detailVehicle?.manufacturer + ' ' + detailVehicle?.model + ' ' + detailVehicle?.model_year + ' ' + detailVehicle?.colour"></span>
+                    x-text="currentVehicle?.manufacturer + ' ' + currentVehicle?.model + ' ' + currentVehicle?.model_year + ' ' + currentVehicle?.colour"></span>
             </div>
             <div class="">
                 <h3 class="font-semibold text-md p-2 border-b">Aktivitas</h3>
@@ -53,19 +54,37 @@
                 <div class="mt-2">
                     <template x-if="tab === 'semua'">
                         <ul class="space-y-2">
-                            <template x-for="pos in detailVehicle?.positions" :key="pos.id">
+                            <template x-for="pos in detailVehicle" :key="pos.id">
                                 <li class="border rounded p-2 bg-gray-50">
-                                    <div class="text-xs text-gray-600"
-                                        x-text="'Dari: ' + (pos.start_latitude ? pos.start_latitude + ', ' + pos.start_longitude : '-')">
+                                    <div class="text-xs text-gray-600">
+                                        <span class="font-medium">Trip ID:</span>
+                                        <span x-text="pos.trip_id"></span>
                                     </div>
-                                    <div class="text-xs text-gray-600"
-                                        x-text="'Ke: ' + (pos.end_latitude ? pos.end_latitude + ', ' + pos.end_longitude : '-')">
+                                    <div class="text-xs text-gray-600">
+                                        <span class="font-medium">Dari:</span>
+                                        <span x-text="pos.start_location || '-'"></span>
                                     </div>
-                                    <div class="text-xs text-gray-600"
-                                        x-text="'Waktu Mulai: ' + (pos.start_time ? new Date(pos.start_time).toLocaleString() : '-')">
+                                    <div class="text-xs text-gray-600">
+                                        <span class="font-medium">Ke:</span>
+                                        <span x-text="pos.end_location || '-'"></span>
                                     </div>
-                                    <div class="text-xs text-gray-600"
-                                        x-text="'Waktu Selesai: ' + (pos.end_time ? new Date(pos.end_time).toLocaleString() : '-')">
+                                    <div class="text-xs text-gray-600">
+                                        <span class="font-medium">Waktu Mulai:</span>
+                                        <span
+                                            x-text="pos.start_timestamp ? new Date(pos.start_timestamp).toLocaleString() : '-'"></span>
+                                    </div>
+                                    <div class="text-xs text-gray-600">
+                                        <span class="font-medium">Waktu Selesai:</span>
+                                        <span
+                                            x-text="pos.end_timestamp ? new Date(pos.end_timestamp).toLocaleString() : '-'"></span>
+                                    </div>
+                                    <div class="text-xs text-gray-600">
+                                        <span class="font-medium">Jarak:</span>
+                                        <span x-text="pos.trip_distance || 0"></span> km
+                                    </div>
+                                    <div class="text-xs text-gray-600">
+                                        <span class="font-medium">Durasi:</span>
+                                        <span x-text="pos.trip_duration || '-'"></span>
                                     </div>
                                 </li>
                             </template>
@@ -77,39 +96,44 @@
                                 <div
                                     class="flex-1 px-4 py-2 rounded bg-gray-600 text-white font-semibold text-center shadow">
                                     <div class="text-xs font-normal">Total Trip</div>
-                                    <div class="text-lg"
-                                        x-text="detailVehicle?.positions?.filter(p => !p.end_time).length || 0"></div>
+                                    <div class="text-lg" x-text="getOngoingTrips().length"></div>
                                 </div>
                                 <div
                                     class="flex-1 px-4 py-2 rounded bg-gray-600 text-white font-semibold text-center shadow">
                                     <div class="text-xs font-normal">Total Jarak</div>
-                                    <div class="text-lg"
-                                        x-text="totalDistance(detailVehicle?.positions?.filter(p => !p.end_time))">
-                                    </div>
+                                    <div class="text-lg" x-text="getTotalDistance(getOngoingTrips())"></div>
                                     <span class="text-xs font-normal">km</span>
                                 </div>
                                 <div
                                     class="flex-1 px-4 py-2 rounded bg-gray-600 text-white font-semibold text-center shadow">
                                     <div class="text-xs font-normal">Total Waktu</div>
-                                    <div class="text-lg"
-                                        x-text="totalDuration(detailVehicle?.positions?.filter(p => !p.end_time))">
-                                    </div>
+                                    <div class="text-lg" x-text="getTotalDuration(getOngoingTrips())"></div>
                                 </div>
                             </div>
                             <ul class="space-y-2">
-                                <template x-for="pos in detailVehicle?.positions?.filter(p => !p.end_time)"
-                                    :key="pos.id">
+                                <template x-for="pos in getOngoingTrips()" :key="pos.id">
                                     <li class="border rounded p-2 bg-yellow-50">
                                         <div class="font-semibold text-yellow-700">Sedang Berjalan</div>
-                                        <div class="text-xs text-gray-600"
-                                            x-text="'Dari: ' + (pos.start_latitude ? pos.start_latitude + ', ' + pos.start_longitude : '-')">
+                                        <div class="text-xs text-gray-600">
+                                            <span class="font-medium">Trip ID:</span>
+                                            <span x-text="pos.trip_id"></span>
                                         </div>
-                                        <div class="text-xs text-gray-600"
-                                            x-text="'Waktu Mulai: ' + (pos.start_time ? new Date(pos.start_time).toLocaleString() : '-')">
+                                        <div class="text-xs text-gray-600">
+                                            <span class="font-medium">Dari:</span>
+                                            <span x-text="pos.start_location || '-'"></span>
+                                        </div>
+                                        <div class="text-xs text-gray-600">
+                                            <span class="font-medium">Waktu Mulai:</span>
+                                            <span
+                                                x-text="pos.start_timestamp ? new Date(pos.start_timestamp).toLocaleString() : '-'"></span>
+                                        </div>
+                                        <div class="text-xs text-gray-600">
+                                            <span class="font-medium">Jarak:</span>
+                                            <span x-text="pos.trip_distance || 0"></span> km
                                         </div>
                                     </li>
                                 </template>
-                                <template x-if="!(detailVehicle?.positions?.some(p => !p.end_time))">
+                                <template x-if="getOngoingTrips().length === 0">
                                     <li class="text-xs text-gray-400 p-2">Tidak ada perjalanan berjalan.</li>
                                 </template>
                             </ul>
@@ -229,6 +253,7 @@
                     map: null,
                     vehicles: [],
                     detailVehicle: null,
+                    currentVehicle: null,
                     markers: {},
                     polylines: {},
                     searchQuery: '',
@@ -283,6 +308,32 @@
                         return `${minutes} menit`;
                     },
 
+                    // initPageCartrack() {
+                    //     this.initMap();
+
+                    //     // inisialisasi flatpickr
+                    //     flatpickr("#dateRangeInput", {
+                    //         mode: "range",
+                    //         dateFormat: "Y-m-d",
+                    //         defaultDate: [
+                    //             this.startDate,
+                    //             this.endDate
+                    //         ],
+                    //         onChange: function(selectedDates, dateStr, instance) {
+                    //             // Kalau sudah pilih 2 tanggal (start & end)
+                    //             if (selectedDates.length === 2) {
+                    //                 const startDate = selectedDates[0].toISOString().split("T")[0];
+                    //                 const endDate = selectedDates[1].toISOString().split("T")[0];
+
+                    //                 // alert(`Kamu memilih range:\nStart: ${startDate}\nEnd: ${endDate}`);
+                    //                 console.log(
+                    //                     `Kamu memilih range:\nStart: ${startDate}\nEnd: ${endDate}\nVehicle: ${this.detailVehicle?.vehicle_id}`
+                    //                 );
+
+                    //             }
+                    //         }
+                    //     });
+                    // },
                     initPageCartrack() {
                         this.initMap();
 
@@ -294,17 +345,22 @@
                                 this.startDate,
                                 this.endDate
                             ],
-                            onChange: function(selectedDates, dateStr, instance) {
+                            onChange: (selectedDates, dateStr, instance) => {
                                 // Kalau sudah pilih 2 tanggal (start & end)
                                 if (selectedDates.length === 2) {
+                                    // Update properti startDate dan endDate
+                                    this.startDate = selectedDates[0];
+                                    this.endDate = selectedDates[1];
+
                                     const startDate = selectedDates[0].toISOString().split("T")[0];
                                     const endDate = selectedDates[1].toISOString().split("T")[0];
 
-                                    // alert(`Kamu memilih range:\nStart: ${startDate}\nEnd: ${endDate}`);
-                                    console.log(
-                                        `Kamu memilih range:\nStart: ${startDate}\nEnd: ${endDate}\nVehicle: ${this.detailVehicle?.vehicle_id}`
-                                    );
+                                    console.log(`Range berubah: ${startDate} - ${endDate}`);
 
+                                    // Jika ada vehicle yang sedang aktif, refresh detailnya
+                                    if (this.currentVehicle) {
+                                        this.showDetail(this.currentVehicle);
+                                    }
                                 }
                             }
                         });
@@ -357,17 +413,87 @@
                         });
                     },
 
-                    async showDetail(vehicle) {
-                        this.detailVehicle = vehicle;
+                    // async showDetail(vehicle) {
+                    //     this.tab = 'semua';
 
+                    //     // Format ke YYYY-MM-DD (misalnya untuk query param API)
+                    //     const formatDate = (date) => {
+                    //         const year = date.getFullYear();
+                    //         const month = String(date.getMonth() + 1).padStart(2, '0');
+                    //         const day = String(date.getDate()).padStart(2, '0');
+
+                    //         return `${year}-${month}-${day}`;
+                    //     };
+
+                    //     const params = {
+                    //         startDate: formatDate(new Date(this.startDate)),
+                    //         endDate: formatDate(new Date(this.endDate)),
+                    //     };
+
+                    //     try {
+
+                    //         const res = await fetch('/api/cartrack-activities', {
+                    //             method: 'POST',
+                    //             headers: {
+                    //                 'Content-Type': 'application/json',
+                    //                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
+                    //                     'content')
+                    //             },
+                    //             body: JSON.stringify({
+                    //                 vehicleId: vehicle.vehicle_id,
+                    //                 ...params
+                    //             })
+                    //         });
+
+                    //         const data = await res.json();
+                    //         this.detailVehicle = data;
+                    //         console.log(data);
+
+                    //         // hapus semua polyline lama
+                    //         for (const vehicleId in this.polylines) {
+                    //             if (this.polylines[vehicleId]) this.polylines[vehicleId].remove();
+                    //         }
+
+                    //         // buat polyline perjalanan kendaraan yang dipilih
+                    //         const coords = [];
+                    //         data.forEach(p => {
+                    //             if (p.start_coordinates_latitude && p.start_coordinates_longitude) {
+                    //                 coords.push([parseFloat(p.start_coordinates_latitude), parseFloat(p
+                    //                     .start_coordinates_longitude)]);
+                    //             }
+                    //             if (p.end_coordinates_latitude && p.end_coordinates_longitude) {
+                    //                 coords.push([parseFloat(p.end_coordinates_latitude), parseFloat(p
+                    //                     .end_coordinates_longitude)]);
+                    //             }
+                    //         });
+
+                    //         if (coords.length > 0) {
+                    //             const color = this.getColorForVehicle(vehicle.vehicle_id);
+                    //             this.polylines[vehicle.vehicle_id] = L.polyline(coords, {
+                    //                 color: color,
+                    //                 weight: 3
+                    //             }).addTo(this.map);
+
+                    //             const last = coords[coords.length - 1];
+                    //             this.map.setView(last, 15, {
+                    //                 animate: true
+                    //             });
+                    //         }
+
+                    //     } catch (error) {
+                    //         console.log(error);
+                    //     }
+                    // },
+
+                    async showDetail(vehicle) {
+                        this.currentVehicle = vehicle; // Simpan vehicle yang aktif
                         this.tab = 'semua';
 
-                        // Format ke YYYY-MM-DD (misalnya untuk query param API)
+                        // Format ke YYYY-MM-DD
                         const formatDate = (date) => {
                             const year = date.getFullYear();
                             const month = String(date.getMonth() + 1).padStart(2, '0');
                             const day = String(date.getDate()).padStart(2, '0');
-
                             return `${year}-${month}-${day}`;
                         };
 
@@ -377,7 +503,6 @@
                         };
 
                         try {
-
                             const res = await fetch('/api/cartrack-activities', {
                                 method: 'POST',
                                 headers: {
@@ -392,7 +517,8 @@
                             });
 
                             const data = await res.json();
-                            console.log(data);
+                            this.detailVehicle = data;
+                            console.log('Data received:', data);
 
                             // hapus semua polyline lama
                             for (const vehicleId in this.polylines) {
@@ -412,6 +538,8 @@
                                 }
                             });
 
+                            console.log('Coordinates for polyline:', coords);
+
                             if (coords.length > 0) {
                                 const color = this.getColorForVehicle(vehicle.vehicle_id);
                                 this.polylines[vehicle.vehicle_id] = L.polyline(coords, {
@@ -423,10 +551,12 @@
                                 this.map.setView(last, 15, {
                                     animate: true
                                 });
+                            } else {
+                                console.log('No valid coordinates found for polyline');
                             }
 
                         } catch (error) {
-                            console.log(error);
+                            console.log('Error in showDetail:', error);
                         }
                     },
 
@@ -451,7 +581,77 @@
                             "brown", "pink", "black", "teal", "cyan"
                         ];
                         return colors[vehicleId % colors.length];
-                    }
+                    },
+                    getOngoingTrips() {
+                        if (!this.detailVehicle) return [];
+
+                        // Untuk testing: tampilkan semua trip dalam range tanggal yang dipilih
+                        console.log('All trips in date range:', this.detailVehicle);
+                        return this.detailVehicle;
+
+                        // Atau jika ingin filter trip dengan jarak > 0 (yang benar-benar bergerak)
+                        // return this.detailVehicle.filter(trip => {
+                        //     return parseFloat(trip.trip_distance) > 0;
+                        // });
+                    },
+
+                    getTotalDistance(trips) {
+                        if (!trips || trips.length === 0) return 0;
+                        const total = trips.reduce((sum, trip) => {
+                            const distance = parseFloat(trip.trip_distance) || 0;
+                            console.log(`Trip ${trip.trip_id}: distance = ${distance}`);
+                            return sum + distance;
+                        }, 0);
+                        console.log(`Total distance: ${total}`);
+                        return total.toFixed(2);
+                    },
+
+                    getTotalDuration(trips) {
+                        if (!trips || trips.length === 0) return '0 menit';
+
+                        let totalSeconds = 0;
+                        trips.forEach(trip => {
+                            if (trip.trip_duration_seconds) {
+                                const seconds = parseInt(trip.trip_duration_seconds) || 0;
+                                console.log(`Trip ${trip.trip_id}: duration = ${seconds} seconds`);
+                                totalSeconds += seconds;
+                            }
+                        });
+
+                        console.log(`Total seconds: ${totalSeconds}`);
+                        const hours = Math.floor(totalSeconds / 3600);
+                        const minutes = Math.floor((totalSeconds % 3600) / 60);
+
+                        if (hours > 0) {
+                            return `${hours} jam ${minutes} menit`;
+                        }
+                        return `${minutes} menit`;
+                    },
+
+                    totalDistance(positions) {
+                        // Fungsi yang sudah ada, sesuaikan dengan struktur data baru
+                        if (!positions) return 0;
+                        return positions.reduce((sum, p) => sum + (parseFloat(p.trip_distance) || 0), 0).toFixed(2);
+                    },
+
+                    totalDuration(positions) {
+                        // Fungsi yang sudah ada, sesuaikan dengan struktur data baru
+                        if (!positions) return '0 menit';
+                        let totalSeconds = 0;
+                        positions.forEach(p => {
+                            if (p.trip_duration_seconds) {
+                                totalSeconds += parseInt(p.trip_duration_seconds);
+                            }
+                        });
+
+                        const hours = Math.floor(totalSeconds / 3600);
+                        const minutes = Math.floor((totalSeconds % 3600) / 60);
+
+                        if (hours > 0) {
+                            return `${hours} jam ${minutes} menit`;
+                        }
+                        return `${minutes} menit`;
+                    },
                 }
             }
         </script>
