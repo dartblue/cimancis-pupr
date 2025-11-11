@@ -2,21 +2,128 @@
     <div class="flex h-screen" x-data="trackingMap()" x-init="initPageCartrack()">
         <!-- Sidebar -->
         <aside class="w-96 h-full bg-white border-r p-4 overflow-y-auto">
-            <x-text-input class="mb-4" id="vehilce-search" x-model="searchQuery" placeholder="Cari kendaraan..." />
-            <div class="flex">
-                <div class="text-sm text-gray-600" x-text="vehicles.length + ' kendaraan'"></div>
+            <!-- Nav Tabs -->
+            <div class="flex justify-between mt-2 mb-2 border-b pb-4">
+                <button class="px-4 py-2 rounded font-semibold transition-colors"
+                    :class="asideTab === 'proyek' ? 'bg-blue-600 text-white shadow' :
+                        'bg-gray-200 text-gray-700 hover:bg-blue-100'"
+                    @click="asideTab = 'proyek'">
+                    Proyek
+                </button>
+                <button class="px-4 py-2 rounded font-semibold transition-colors"
+                    :class="asideTab === 'kendaraan' ? 'bg-blue-600 text-white shadow' :
+                        'bg-gray-200 text-gray-700 hover:bg-blue-100'"
+                    @click="asideTab = 'kendaraan'">
+                    Kendaraan
+                </button>
             </div>
-            <ul class="space-y-3 border-t mt-4">
-                <template x-for="vehicle in filteredVehicles" :key="vehicle.vehicle_id">
-                    <li class="p-3 rounded border bg-gray-50 hover:bg-gray-100 cursor-pointer"
-                        @click="showDetail(vehicle)" @hover="alert('hover')">
-                        <div class="font-semibold"
-                            x-text="vehicle.heavy_equipment.length > 0 ? vehicle.heavy_equipment[0].name : vehicle.manufacturer + ' ' +vehicle.model + ' ' + vehicle.model_year + ' ' + vehicle.colour">
+            <!-- End Nav Tabs -->
+
+            <template x-if="asideTab === 'proyek'">
+                <div>
+                    <div class="sticky">
+                        <h2 class="font-semibold text-lg mb-4">Daftar Proyek</h2>
+                        <select id="year" name="year"
+                            class="rounded-md mb-4 border-gray-300 w-full shadow-sm  sm:text-sm focus:border-primary-500 focus:ring focus:ring-primary-500">
+                            <option value="">-- Filter Tahun --</option>
+                        </select>
+                        <x-text-input class="mb-4" id="project-search" x-model="searchQueryProject"
+                            placeholder="Cari proyek atau lokasi..." />
+                    </div>
+                    <div class="border-t pt-4">
+                        <div class="mb-4 p-4 bg-white rounded shadow flex">
+                            <div class="flex-shrink-0 mr-4">
+                                <img src="https://via.placeholder.com/150" alt="No Image Available"
+                                    class="w-24 h-24 object-cover rounded">
+                            </div>
+                            <div class="flex-grow">
+                                <p class="font-semibold">Nama Proyek Tidak Tersedia</p>
+                                <p class="text-sm text-gray-600">Alamat Tidak Tersedia</p>
+                                <p class="text-sm text-gray-600">
+                                    Lokasi Tidak Tersedia
+                                </p>
+                                <p class="text-sm">Status: Status Tidak Tersedia</p>
+                                <p class="text-sm">Tipe: Tipe Tidak Tersedia</p>
+                                <p class="text-sm mt-2"><a href="${result.documentation_link}" target="_blank"
+                                        class="text-blue-500 hover:underline">Lihat Dokumentasi</a></p>
+                            </div>
                         </div>
-                        <div class="text-xs text-gray-600" x-text="formatLatLon(vehicle)"></div>
-                    </li>
-                </template>
-            </ul>
+                        <div class="mb-4 p-4 bg-white rounded shadow flex">
+                            <div class="flex-shrink-0 mr-4">
+                                <img src="https://via.placeholder.com/150" alt="No Image Available"
+                                    class="w-24 h-24 object-cover rounded">
+                            </div>
+                            <div class="flex-grow">
+                                <p class="font-semibold">Nama Proyek Tidak Tersedia</p>
+                                <p class="text-sm text-gray-600">Alamat Tidak Tersedia</p>
+                                <p class="text-sm text-gray-600">
+                                    Lokasi Tidak Tersedia
+                                </p>
+                                <p class="text-sm">Status: Status Tidak Tersedia</p>
+                                <p class="text-sm">Tipe: Tipe Tidak Tersedia</p>
+                                <p class="text-sm mt-2"><a href="${result.documentation_link}" target="_blank"
+                                        class="text-blue-500 hover:underline">Lihat Dokumentasi</a></p>
+                            </div>
+                        </div>
+                        <div class="mb-4 p-4 bg-white rounded shadow flex">
+                            <div class="flex-shrink-0 mr-4">
+                                <img src="https://via.placeholder.com/150" alt="No Image Available"
+                                    class="w-24 h-24 object-cover rounded">
+                            </div>
+                            <div class="flex-grow">
+                                <p class="font-semibold">Nama Proyek Tidak Tersedia</p>
+                                <p class="text-sm text-gray-600">Alamat Tidak Tersedia</p>
+                                <p class="text-sm text-gray-600">
+                                    Lokasi Tidak Tersedia
+                                </p>
+                                <p class="text-sm">Status: Status Tidak Tersedia</p>
+                                <p class="text-sm">Tipe: Tipe Tidak Tersedia</p>
+                                <p class="text-sm mt-2"><a href="${result.documentation_link}" target="_blank"
+                                        class="text-blue-500 hover:underline">Lihat Dokumentasi</a></p>
+                            </div>
+                        </div>
+                        <div class="mb-4 p-4 bg-white rounded shadow flex">
+                            <div class="flex-shrink-0 mr-4">
+                                <img src="https://via.placeholder.com/150" alt="No Image Available"
+                                    class="w-24 h-24 object-cover rounded">
+                            </div>
+                            <div class="flex-grow">
+                                <p class="font-semibold">Nama Proyek Tidak Tersedia</p>
+                                <p class="text-sm text-gray-600">Alamat Tidak Tersedia</p>
+                                <p class="text-sm text-gray-600">
+                                    Lokasi Tidak Tersedia
+                                </p>
+                                <p class="text-sm">Status: Status Tidak Tersedia</p>
+                                <p class="text-sm">Tipe: Tipe Tidak Tersedia</p>
+                                <p class="text-sm mt-2"><a href="${result.documentation_link}" target="_blank"
+                                        class="text-blue-500 hover:underline">Lihat Dokumentasi</a></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <template x-if="asideTab === 'kendaraan'">
+                <div>
+                    <h2 class="font-semibold text-lg mb-4">Daftar Kendaraan</h2>
+                    <x-text-input class="mb-4" id="vehilce-search" x-model="searchQuery"
+                        placeholder="Cari kendaraan..." />
+                    <div class="flex">
+                        <div class="text-sm text-gray-600" x-text="vehicles.length + ' kendaraan'"></div>
+                    </div>
+                    <ul class="space-y-3 border-t mt-4">
+                        <template x-for="vehicle in filteredVehicles" :key="vehicle.vehicle_id">
+                            <li class="p-3 rounded border bg-gray-50 hover:bg-gray-100 cursor-pointer"
+                                @click="showDetail(vehicle)" @hover="alert('hover')">
+                                <div class="font-semibold"
+                                    x-text="vehicle.heavy_equipment.length > 0 ? vehicle.heavy_equipment[0].name : vehicle.manufacturer + ' ' +vehicle.model + ' ' + vehicle.model_year + ' ' + vehicle.colour">
+                                </div>
+                                <div class="text-xs text-gray-600" x-text="formatLatLon(vehicle)"></div>
+                            </li>
+                        </template>
+                    </ul>
+                </div>
+            </template>
         </aside>
 
         <!-- Detail Sidebar -->
@@ -33,7 +140,10 @@
             </div>
             <div class="">
                 <h3 class="font-semibold text-md p-2 border-b">Aktivitas</h3>
+
+                <!-- Date Range Picker -->
                 <x-text-input id="dateRangeInput" placeholder="Periode" class="mt-2" />
+
                 <!-- Nav Tabs -->
                 <div class="flex justify-between mt-2 mb-2 border-b pb-2">
                     <button class="px-4 py-2 rounded font-semibold transition-colors"
@@ -50,6 +160,7 @@
                     </button>
                 </div>
                 <!-- End Nav Tabs -->
+
                 <!-- Tab Content -->
                 <div class="mt-2">
                     <template x-if="tab === 'semua'">
@@ -187,7 +298,6 @@
     @push('styles')
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
             integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
         <style>
             .custom-div-icon {
                 background: transparent;
@@ -246,7 +356,6 @@
     @push('scripts')
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
             integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-        <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
         <script>
             function trackingMap() {
                 return {
@@ -258,6 +367,7 @@
                     polylines: {},
                     searchQuery: '',
                     tab: 'semua',
+                    asideTab: 'proyek',
                     startDate: new Date().setDate(new Date().getDate() - 7),
                     endDate: new Date(),
 

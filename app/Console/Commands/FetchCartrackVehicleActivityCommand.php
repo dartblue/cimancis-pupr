@@ -14,7 +14,7 @@ class FetchCartrackVehicleActivityCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'fetch:cartrack-vehicles-activities';
+    protected $signature = 'cartrack:activity';
 
     /**
      * The console command description.
@@ -39,8 +39,8 @@ class FetchCartrackVehicleActivityCommand extends Command
             $startDate = $yesterday->startOfDay()->format('Y-m-d H:i:s');
             $endDate   = $yesterday->endOfDay()->format('Y-m-d H:i:s');
 
-            // $startDate = '2025-10-03 00:00:00';
-            // $endDate   = '2025-10-18 23:59:59';
+            // $startDate = '2025-10-26 00:00:00';
+            // $endDate   = '2025-11-01 23:59:59';
 
             do {
                 $response = Http::withHeaders([

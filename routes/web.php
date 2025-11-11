@@ -35,41 +35,6 @@ Route::get('/project-maps', [GuestController::class, 'project_map_index'])->name
 Route::get('/project-map/search', [GuestController::class, 'search'])->name('guest.project-map.search');
 Route::get('/project-maps/map', [GuestController::class, 'map'])->name('guest.map');
 
-Route::get('/project-map/map', function () {
-
-    $clockStart = $data['clock_start']; // 7868306 detik
-    $clockEnd   = $data['clock_end'];   // 7882638 detik
-
-    // Durasi pemakaian selama trip
-    $durationSeconds = $clockEnd - $clockStart;
-
-    // Pakai CarbonInterval (lebih rapi)
-    $duration = CarbonInterval::seconds($durationSeconds)->cascade()->forHumans();
-    // Output: "4 hours 45 minutes" misalnya
-
-
-    $idleSeconds = $data['idle_time_seconds']; // 14318
-
-    // Format ke HH:MM:SS
-    $idleFormatted = gmdate("H:i:s", $idleSeconds); // "03:58:38"
-
-    // Atau dengan CarbonInterval
-    $idleInterval = CarbonInterval::seconds($idleSeconds)->cascade()->forHumans();
-    // "3 hours 58 minutes"
-    return view('project-map.map');
-});
-
-Route::get('/vehicles', [VehicleController::class, 'index']);
-
-Route::get('/tracking/data', function () {
-    $vehicles = Vehicle::with(['positions' => function ($q) {
-        $q->orderBy('created_at', 'asc');
-    }])->get();
-
-    return response()->json($vehicles);
-});
-
-
 // Operator and Helper routes
 Route::middleware(['auth', 'operator_helper'])->prefix('operator-helper')->group(function () {
     Route::get('/', [OperatorHelperController::class, 'dashboard'])->name('operator-helper.dashboard');
@@ -166,6 +131,7 @@ Route::get('/api/hours-meter-history/{id}', [HeavyEquipmentController::class, 'g
 Route::get('/api/equipment-tracking/{id}', [HeavyEquipmentController::class, 'getTrackingData'])
     ->name('api.equipment-tracking');
 
+// Cartrack API for web
 Route::get('/api/cartrack-vehicles', [CartrackActivityController::class, 'getCartrackVehicles'])
     ->name('api.cartrack-vehicles');
 
