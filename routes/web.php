@@ -131,6 +131,13 @@ Route::get('/api/hours-meter-history/{id}', [HeavyEquipmentController::class, 'g
 Route::get('/api/equipment-tracking/{id}', [HeavyEquipmentController::class, 'getTrackingData'])
     ->name('api.equipment-tracking');
 
+
+Route::get('/api/project-years', [GuestController::class, 'getProjectYears'])
+    ->name('api.project-years');
+
+Route::get('/api/projects', [GuestController::class, 'getProjects'])
+    ->name('api.projects');
+
 // Cartrack API for web
 Route::get('/api/cartrack-vehicles', [CartrackActivityController::class, 'getCartrackVehicles'])
     ->name('api.cartrack-vehicles');

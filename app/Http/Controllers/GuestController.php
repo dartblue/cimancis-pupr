@@ -194,6 +194,62 @@ class GuestController extends Controller
         return response()->json($formattedProjects);
     }
 
+    public function getProjectYears()
+    {
+        $years = WorkAssignment::selectRaw('DISTINCT YEAR(start_date) as year')
+            ->orderBy('year', 'desc')
+            ->pluck('year');
+
+        return response()->json($years);
+    }
+
+    public function getProjects(Request $request)
+    {
+        $query = $request->input('query');
+        $year = $request->input('year', date('Y'));
+
+        $projects = WorkAssignment::with(['city', 'district', 'village', 'fieldConditionPhotos' => function ($q) {
+            $q->latest()->take(1);
+        }])
+            ->when($query, function ($q) use ($query) {
+                $q->where('project_name', 'like', "%$query%")
+                    ->orWhere('alamat', 'like', "%$query%")
+                    ->orWhereHas('city', function ($q2) use ($query) {
+                        $q2->where('name', 'like', "%$query%");
+                    })
+                    ->orWhereHas('district', function ($q2) use ($query) {
+                        $q2->where('name', 'like', "%$query%");
+                    })
+                    ->orWhereHas('village', function ($q2) use ($query) {
+                        $q2->where('name', 'like', "%$query%");
+                    });
+            })
+            ->when($year, function ($q) use ($year) {
+                $q->whereYear('start_date', $year);
+            })
+            ->get();
+        $formattedProjects = $projects->map(function ($project) {
+            return [
+                'id' => $project->id,
+                'project_name' => $project->project_name,
+                'alamat' => $project->alamat,
+                'latitude' => $project->latitude,
+                'longitude' => $project->longitude,
+                'documentation_link' => $project->documentation_link,
+                'city_name' => $project->city ? $project->city->name : null,
+                'district_name' => $project->district ? $project->district->name : null,
+                'village_name' => $project->village ? $project->village->name : null,
+                'status' => $project->status,
+                'tipe_pekerjaan' => $project->tipe_pekerjaan,
+                'image_path' => $project->fieldConditionPhotos->isNotEmpty()
+                    ? asset($project->fieldConditionPhotos->first()->photo_path)
+                    : null
+            ];
+        });
+
+        return response()->json($formattedProjects);
+    }
+
     public function map()
     {
         return view('guest.map');

@@ -1,120 +1,128 @@
 <x-cartrack-layout>
     <div class="flex h-screen" x-data="trackingMap()" x-init="initPageCartrack()">
         <!-- Sidebar -->
-        <aside class="w-96 h-full bg-white border-r p-4 overflow-y-auto">
-            <!-- Nav Tabs -->
-            <div class="flex justify-between mt-2 mb-2 border-b pb-4">
-                <button class="px-4 py-2 rounded font-semibold transition-colors"
-                    :class="asideTab === 'proyek' ? 'bg-blue-600 text-white shadow' :
-                        'bg-gray-200 text-gray-700 hover:bg-blue-100'"
-                    @click="asideTab = 'proyek'">
-                    Proyek
-                </button>
-                <button class="px-4 py-2 rounded font-semibold transition-colors"
-                    :class="asideTab === 'kendaraan' ? 'bg-blue-600 text-white shadow' :
-                        'bg-gray-200 text-gray-700 hover:bg-blue-100'"
-                    @click="asideTab = 'kendaraan'">
-                    Kendaraan
-                </button>
-            </div>
-            <!-- End Nav Tabs -->
 
-            <template x-if="asideTab === 'proyek'">
-                <div>
-                    <div class="sticky">
+        <aside class="w-96 h-full bg-white border-r overflow-y-auto">
+            <!-- Sticky Header -->
+            <div class="sticky top-0 bg-white z-10 p-4 border-b">
+                <!-- Nav Tabs -->
+                <div class="flex justify-between mb-4">
+                    <button class="px-4 py-2 rounded font-semibold transition-colors"
+                        :class="asideTab === 'proyek' ? 'bg-blue-600 text-white shadow' :
+                            'bg-gray-200 text-gray-700 hover:bg-blue-100'"
+                        @click="asideTab = 'proyek'; loadDataProjects()">
+                        Proyek
+                    </button>
+                    <button class="px-4 py-2 rounded font-semibold transition-colors"
+                        :class="asideTab === 'kendaraan' ? 'bg-blue-600 text-white shadow' :
+                            'bg-gray-200 text-gray-700 hover:bg-blue-100'"
+                        @click="asideTab = 'kendaraan'; loadData()">
+                        Kendaraan
+                    </button>
+                </div>
+                <!-- End Nav Tabs -->
+
+                <!-- Tab Proyek Header -->
+                <template x-if="asideTab === 'proyek'">
+                    <div>
                         <h2 class="font-semibold text-lg mb-4">Daftar Proyek</h2>
-                        <select id="year" name="year"
-                            class="rounded-md mb-4 border-gray-300 w-full shadow-sm  sm:text-sm focus:border-primary-500 focus:ring focus:ring-primary-500">
-                            <option value="">-- Filter Tahun --</option>
+                        <select id="year" name="year" x-model="selectedYear"
+                            class="rounded-md mb-4 border-gray-300 w-full shadow-sm sm:text-sm focus:border-primary-500 focus:ring focus:ring-primary-500">
+                            <template x-for="year in years" :key="year">
+                                <option :value="year" x-text="year"></option>
+                            </template>
                         </select>
                         <x-text-input class="mb-4" id="project-search" x-model="searchQueryProject"
                             placeholder="Cari proyek atau lokasi..." />
                     </div>
-                    <div class="border-t pt-4">
-                        <div class="mb-4 p-4 bg-white rounded shadow flex">
-                            <div class="flex-shrink-0 mr-4">
-                                <img src="https://via.placeholder.com/150" alt="No Image Available"
-                                    class="w-24 h-24 object-cover rounded">
-                            </div>
-                            <div class="flex-grow">
-                                <p class="font-semibold">Nama Proyek Tidak Tersedia</p>
-                                <p class="text-sm text-gray-600">Alamat Tidak Tersedia</p>
-                                <p class="text-sm text-gray-600">
-                                    Lokasi Tidak Tersedia
-                                </p>
-                                <p class="text-sm">Status: Status Tidak Tersedia</p>
-                                <p class="text-sm">Tipe: Tipe Tidak Tersedia</p>
-                                <p class="text-sm mt-2"><a href="${result.documentation_link}" target="_blank"
-                                        class="text-blue-500 hover:underline">Lihat Dokumentasi</a></p>
-                            </div>
-                        </div>
-                        <div class="mb-4 p-4 bg-white rounded shadow flex">
-                            <div class="flex-shrink-0 mr-4">
-                                <img src="https://via.placeholder.com/150" alt="No Image Available"
-                                    class="w-24 h-24 object-cover rounded">
-                            </div>
-                            <div class="flex-grow">
-                                <p class="font-semibold">Nama Proyek Tidak Tersedia</p>
-                                <p class="text-sm text-gray-600">Alamat Tidak Tersedia</p>
-                                <p class="text-sm text-gray-600">
-                                    Lokasi Tidak Tersedia
-                                </p>
-                                <p class="text-sm">Status: Status Tidak Tersedia</p>
-                                <p class="text-sm">Tipe: Tipe Tidak Tersedia</p>
-                                <p class="text-sm mt-2"><a href="${result.documentation_link}" target="_blank"
-                                        class="text-blue-500 hover:underline">Lihat Dokumentasi</a></p>
-                            </div>
-                        </div>
-                        <div class="mb-4 p-4 bg-white rounded shadow flex">
-                            <div class="flex-shrink-0 mr-4">
-                                <img src="https://via.placeholder.com/150" alt="No Image Available"
-                                    class="w-24 h-24 object-cover rounded">
-                            </div>
-                            <div class="flex-grow">
-                                <p class="font-semibold">Nama Proyek Tidak Tersedia</p>
-                                <p class="text-sm text-gray-600">Alamat Tidak Tersedia</p>
-                                <p class="text-sm text-gray-600">
-                                    Lokasi Tidak Tersedia
-                                </p>
-                                <p class="text-sm">Status: Status Tidak Tersedia</p>
-                                <p class="text-sm">Tipe: Tipe Tidak Tersedia</p>
-                                <p class="text-sm mt-2"><a href="${result.documentation_link}" target="_blank"
-                                        class="text-blue-500 hover:underline">Lihat Dokumentasi</a></p>
-                            </div>
-                        </div>
-                        <div class="mb-4 p-4 bg-white rounded shadow flex">
-                            <div class="flex-shrink-0 mr-4">
-                                <img src="https://via.placeholder.com/150" alt="No Image Available"
-                                    class="w-24 h-24 object-cover rounded">
-                            </div>
-                            <div class="flex-grow">
-                                <p class="font-semibold">Nama Proyek Tidak Tersedia</p>
-                                <p class="text-sm text-gray-600">Alamat Tidak Tersedia</p>
-                                <p class="text-sm text-gray-600">
-                                    Lokasi Tidak Tersedia
-                                </p>
-                                <p class="text-sm">Status: Status Tidak Tersedia</p>
-                                <p class="text-sm">Tipe: Tipe Tidak Tersedia</p>
-                                <p class="text-sm mt-2"><a href="${result.documentation_link}" target="_blank"
-                                        class="text-blue-500 hover:underline">Lihat Dokumentasi</a></p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </template>
+                </template>
 
-            <template x-if="asideTab === 'kendaraan'">
-                <div>
-                    <h2 class="font-semibold text-lg mb-4">Daftar Kendaraan</h2>
-                    <x-text-input class="mb-4" id="vehilce-search" x-model="searchQuery"
-                        placeholder="Cari kendaraan..." />
-                    <div class="flex">
-                        <div class="text-sm text-gray-600" x-text="vehicles.length + ' kendaraan'"></div>
+                <!-- Tab Kendaraan Header -->
+                <template x-if="asideTab === 'kendaraan'">
+                    <div>
+                        <h2 class="font-semibold text-lg mb-4">Daftar Kendaraan</h2>
+                        <x-text-input class="mb-4" id="vehilce-search" x-model="searchQuery"
+                            placeholder="Cari kendaraan..." />
+                        <div class="flex">
+                            <div class="text-sm text-gray-600" x-text="vehicles.length + ' kendaraan'"></div>
+                        </div>
                     </div>
-                    <ul class="space-y-3 border-t mt-4">
+                </template>
+            </div>
+            <!-- End Sticky Header -->
+
+            <!-- Scrollable Content -->
+            <div class="p-4">
+                <template x-if="asideTab === 'proyek'">
+                    <div id="project-list">
+                        <template x-if="projects.length === 0">
+                            <div class="text-center py-8 text-gray-500">
+                                <svg class="w-12 h-12 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <p class="text-sm">Tidak ada proyek ditemukan</p>
+                            </div>
+                        </template>
+                        <template x-for="project in projects" :key="project.id">
+                            <div class="mb-4 p-4 bg-white rounded shadow flex hover:shadow-lg transition cursor-pointer"
+                                @click="
+                            map.setView([parseFloat(project.latitude), parseFloat(project.longitude)], 15, { animate: true });
+                            if (projectMarkers[project.id]) {
+                                projectMarkers[project.id].openPopup();
+                            }
+                        ">
+                                <div class="flex-shrink-0 mr-4">
+                                    <template x-if="project.image_url">
+                                        <img :src="project.image_url" :alt="project.project_name"
+                                            class="w-24 h-24 object-cover rounded">
+                                    </template>
+                                    <template x-if="!project.image_url">
+                                        <div class="w-24 h-24 bg-gray-200 rounded flex items-center justify-center">
+                                            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            </svg>
+                                        </div>
+                                    </template>
+                                </div>
+                                <div class="flex-grow">
+                                    <p class="font-semibold"
+                                        x-text="project.project_name || 'Nama Proyek Tidak Tersedia'"></p>
+                                    <p class="text-sm text-gray-600"
+                                        x-text="project.address || 'Alamat Tidak Tersedia'"></p>
+                                    <p class="text-sm text-gray-600">
+                                        <span x-text="project.village_name"></span>,
+                                        <span x-text="project.district_name"></span>,
+                                        <span x-text="project.city_name"></span>
+                                    </p>
+                                    <p class="text-sm">
+                                        <span>Status: </span>
+                                        <span class="font-semibold"
+                                            :class="project.status === 'Selesai' ? 'text-green-600' : 'text-orange-600'"
+                                            x-text="project.status || 'Status Tidak Tersedia'"></span>
+                                    </p>
+                                    <p class="text-sm"
+                                        x-text="'Tipe: ' + (project.project_type || 'Tipe Tidak Tersedia')"></p>
+                                    <template x-if="project.documentation_link">
+                                        <p class="text-sm mt-2">
+                                            <a :href="project.documentation_link" target="_blank"
+                                                class="text-blue-500 hover:underline" @click.stop>Lihat Dokumentasi</a>
+                                        </p>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+
+                <template x-if="asideTab === 'kendaraan'">
+                    <ul class="space-y-3">
                         <template x-for="vehicle in filteredVehicles" :key="vehicle.vehicle_id">
                             <li class="p-3 rounded border bg-gray-50 hover:bg-gray-100 cursor-pointer"
-                                @click="showDetail(vehicle)" @hover="alert('hover')">
+                                @click="showDetail(vehicle)">
                                 <div class="font-semibold"
                                     x-text="vehicle.heavy_equipment.length > 0 ? vehicle.heavy_equipment[0].name : vehicle.manufacturer + ' ' +vehicle.model + ' ' + vehicle.model_year + ' ' + vehicle.colour">
                                 </div>
@@ -122,8 +130,9 @@
                             </li>
                         </template>
                     </ul>
-                </div>
-            </template>
+                </template>
+            </div>
+            <!-- End Scrollable Content -->
         </aside>
 
         <!-- Detail Sidebar -->
@@ -274,7 +283,24 @@
         </aside>
 
         <!-- Map -->
-        <div id="map" class="w-full h-full"></div>
+        <div id="map" class="w-full h-full">
+            <!-- Loading Overlay -->
+            <div x-show="isLoading" x-transition
+                class="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-[9999]"
+                style="display: none;">
+                <div class="text-center">
+                    <svg class="animate-spin h-12 w-12 text-blue-600 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg"
+                        fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                            stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                        </path>
+                    </svg>
+                    <p class="text-gray-600 font-semibold">Memuat data...</p>
+                </div>
+            </div>
+        </div>
 
         <!-- Detail Tambahan di Bawah Map -->
         <div x-show="detailVehicle" x-transition
@@ -298,6 +324,7 @@
     @push('styles')
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
             integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
         <style>
             .custom-div-icon {
                 background: transparent;
@@ -350,12 +377,171 @@
             .custom-div-icon i.fa-clock {
                 color: #FFA500;
             }
+
+            .leaflet-control a {
+                background-color: #fff;
+                border-bottom: 1px solid #ccc;
+                width: 26px;
+                height: 26px;
+                line-height: 26px;
+                display: block;
+                text-align: center;
+                text-decoration: none;
+                color: black;
+            }
+
+            .leaflet-control a:hover {
+                background-color: #f4f4f4;
+            }
+
+            .leaflet-control a:first-child {
+                border-top-left-radius: 4px;
+                border-top-right-radius: 4px;
+            }
+
+            .leaflet-control a:last-child {
+                border-bottom-left-radius: 4px;
+                border-bottom-right-radius: 4px;
+                border-bottom: none;
+            }
+
+            .project-popup {
+                font-family: Arial, sans-serif;
+                display: flex;
+                max-width: 280px;
+            }
+
+            .project-info {
+                flex: 1;
+                padding-right: 10px;
+            }
+
+            .project-title {
+                font-size: 14px;
+                font-weight: bold;
+                margin-bottom: 5px;
+                color: #333 !important;
+            }
+
+            .project-details p {
+                font-size: 11px;
+                margin: 0 0 2px 0 !important;
+                color: #666 !important;
+            }
+
+            .project-links {
+                display: flex;
+                flex-direction: column;
+                margin-top: 5px;
+            }
+
+            .project-links a {
+                text-decoration: none;
+                color: #fff !important;
+                padding: 4px 8px;
+                border-radius: 3px;
+                font-size: 11px;
+                margin-bottom: 3px;
+                text-align: center;
+                transition: background-color 0.3s;
+            }
+
+            .doc-link {
+                background-color: #030F6B !important;
+            }
+
+            .doc-link:hover {
+                background-color: #fd7e14 !important;
+            }
+
+            .direction-link {
+                background-color: #38a169 !important;
+            }
+
+            .direction-link:hover {
+                background-color: #2f855a !important;
+            }
+
+            .project-image-container {
+                width: 125px;
+                height: 125px;
+                overflow: hidden;
+                border-radius: 3px;
+            }
+
+            .project-image img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+            .no-image {
+                background-color: #f1f1f1;
+                color: #999;
+                text-align: center;
+                padding: 10px;
+                border-radius: 3px;
+                font-size: 11px;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .leaflet-popup-content-wrapper {
+                padding: 0;
+            }
+
+            .leaflet-popup-content {
+                margin: 0;
+                padding: 20px;
+            }
+
+            /* Responsive styles for mobile */
+            @media (max-width: 480px) {
+                .leaflet-popup-content {
+                    max-width: 250px;
+                }
+
+                .project-popup {
+                    max-width: 240px;
+                }
+
+                .project-title {
+                    font-size: 13px;
+                }
+
+                .project-details p {
+                    font-size: 10px;
+                }
+
+                .project-links a {
+                    font-size: 10px;
+                    padding: 3px 6px;
+                }
+
+                .project-image-container {
+                    width: 100px;
+                    height: 100px;
+                }
+            }
+
+            .user-location-icon {
+                font-size: 30px;
+                text-align: center;
+                line-height: 40px;
+            }
+
+            .leaflet-control-attribution {
+                display: none !important;
+            }
         </style>
     @endpush
 
     @push('scripts')
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
             integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+        <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
         <script>
             function trackingMap() {
                 return {
@@ -364,13 +550,85 @@
                     detailVehicle: null,
                     currentVehicle: null,
                     markers: {},
+                    projectMarkers: {},
                     polylines: {},
                     searchQuery: '',
-                    tab: 'semua',
                     asideTab: 'proyek',
+                    tab: 'semua',
                     startDate: new Date().setDate(new Date().getDate() - 7),
                     endDate: new Date(),
+                    years: [],
+                    selectedYear: new Date().getFullYear(),
+                    projects: [],
+                    searchQueryProject: '',
+                    isLoading: false, // Tambahkan ini
+                    init() {
+                        // Watch untuk searchQueryProject
+                        this.$watch('searchQueryProject', (value) => {
+                            if (value.length >= 3 || value.length === 0) {
+                                this.searchProjects();
+                            }
+                        });
 
+                        // Watch untuk selectedYear
+                        this.$watch('selectedYear', (value) => {
+                            if (this.asideTab === 'proyek') {
+                                this.searchProjects();
+                            }
+                        });
+                    },
+
+                    async searchProjects() {
+                        this.isLoading = true;
+
+                        // Hapus semua marker proyek
+                        this.map.eachLayer((layer) => {
+                            if (layer instanceof L.Marker) {
+                                this.map.removeLayer(layer);
+                            }
+                        });
+
+                        // Reset projectMarkers
+                        this.projectMarkers = {};
+
+                        try {
+                            const params = new URLSearchParams({
+                                year: this.selectedYear,
+                                query: this.searchQueryProject
+                            });
+
+                            const res = await fetch(`/api/projects?${params.toString()}`);
+                            this.projects = await res.json();
+
+                            console.log('Search results:', this.projects);
+
+                            // Tambahkan marker untuk hasil pencarian
+                            this.projects.forEach(proj => {
+                                if (!proj.latitude || !proj.longitude) return;
+
+                                const lat = parseFloat(proj.latitude);
+                                const lon = parseFloat(proj.longitude);
+
+                                // Simpan marker ke projectMarkers
+                                this.projectMarkers[proj.id] = L.marker([lat, lon], {
+                                        icon: this.getProjectIcon(proj.status)
+                                    }).addTo(this.map)
+                                    .bindPopup(this.getPopupContenForProject(proj));
+                            });
+
+                            // Jika ada hasil, zoom ke proyek pertama
+                            if (this.projects.length > 0 && this.projects[0].latitude && this.projects[0].longitude) {
+                                this.map.setView([
+                                    parseFloat(this.projects[0].latitude),
+                                    parseFloat(this.projects[0].longitude)
+                                ], 13);
+                            }
+                        } catch (error) {
+                            console.error('Error searching projects:', error);
+                        } finally {
+                            this.isLoading = false;
+                        }
+                    },
                     get filteredVehicles() {
                         if (!this.searchQuery) return this.vehicles;
                         const q = this.searchQuery.toLowerCase();
@@ -418,6 +676,11 @@
                         return `${minutes} menit`;
                     },
 
+                    async getYears() {
+                        const res = await fetch('/api/project-years');
+                        this.years = await res.json();
+                    },
+
                     // initPageCartrack() {
                     //     this.initMap();
 
@@ -445,6 +708,7 @@
                     //     });
                     // },
                     initPageCartrack() {
+                        this.getYears();
                         this.initMap();
 
                         // inisialisasi flatpickr
@@ -482,26 +746,48 @@
                             maxZoom: 19,
                         }).addTo(this.map);
 
-                        this.loadData();
+                        // this.loadData();
+                        this.loadDataProjects();
+                    },
+
+                    async loadDataProjects() {
+                        this.detailVehicle = null;
+                        this.currentVehicle = null;
+                        this.searchQueryProject = ''; // Reset search
+                        await this.searchProjects(); // Gunakan searchProjects untuk load data
                     },
 
                     async loadData() {
-                        const res = await fetch('/api/cartrack-vehicles');
-                        this.vehicles = await res.json();
+                        this.isLoading = true;
 
-                        this.vehicles.forEach(v => {
+                        // Hapus SEMUA marker (proyek dan kendaraan)
+                        this.map.eachLayer((layer) => {
+                            if (layer instanceof L.Marker) {
+                                this.map.removeLayer(layer);
+                            }
+                        });
 
-                            if (!v.latest_activity) return;
+                        // Hapus semua polyline
+                        for (const vehicleId in this.polylines) {
+                            if (this.polylines[vehicleId]) this.polylines[vehicleId].remove();
+                        }
+                        this.polylines = {};
 
-                            const lastLat = parseFloat(v.latest_activity.end_coordinates_latitude ?? v
-                                .latest_activity
-                                .start_coordinates_latitude);
-                            const lastLon = parseFloat(v.latest_activity.end_coordinates_longitude ?? v
-                                .latest_activity
-                                .start_coordinates_longitude);
+                        try {
+                            const res = await fetch('/api/cartrack-vehicles');
+                            this.vehicles = await res.json();
 
-                            // marker
-                            if (!this.markers[v.vehicle_id]) {
+                            this.vehicles.forEach(v => {
+                                if (!v.latest_activity) return;
+
+                                const lastLat = parseFloat(v.latest_activity.end_coordinates_latitude ?? v
+                                    .latest_activity
+                                    .start_coordinates_latitude);
+                                const lastLon = parseFloat(v.latest_activity.end_coordinates_longitude ?? v
+                                    .latest_activity
+                                    .start_coordinates_longitude);
+
+                                // Buat marker baru setiap kali load
                                 this.markers[v.vehicle_id] = L.marker([lastLat, lastLon], {
                                         icon: this.getCarIcon()
                                     }).addTo(this.map)
@@ -511,16 +797,12 @@
                                     .on('click', () => {
                                         this.showDetail(v);
                                     });
-                            } else {
-                                this.markers[v.vehicle_id].setLatLng([lastLat, lastLon])
-                                    .setPopupContent(
-                                        `<b>${v.heavy_equipment.length > 0 ? v.heavy_equipment[0].name : v.manufacturer}</b><br>Lat: ${lastLat}<br>Lon: ${lastLon}`
-                                    )
-                                    .on('click', () => {
-                                        this.showDetail(v);
-                                    });
-                            }
-                        });
+                            });
+                        } catch (error) {
+                            console.error('Error loading vehicles:', error);
+                        } finally {
+                            this.isLoading = false;
+                        }
                     },
 
                     // async showDetail(vehicle) {
@@ -676,6 +958,60 @@
                         return ` ${v.latest_activity.end_location}`;
                     },
 
+                    getPopupContenForProject(project) {
+                        return `
+                            <div class="project-popup">
+                                <div class="project-info">
+                                    <h3 class="project-title">${project.project_name}</h3>
+                                    <div class="project-details">
+                                        <p>${project.village_name}, ${project.district_name}</p>
+                                        <p>${project.city_name}</p>
+                                    </div>
+                                    <div class="project-links">
+                                        ${project.documentation_link ?
+                                        `<a href="${project.documentation_link}" target="_blank" class="doc-link">Dokumentasi</a>` :
+                                        ''}
+                                        <a href="https://www.google.com/maps/dir/?api=1&destination=${project.latitude},${project.longitude}" target="_blank" class="direction-link">Menuju Lokasi</a>
+                                    </div>
+                                </div>
+                                <div class="project-image-container">
+                                    ${project.image_url ?
+                                        `<a href="${project.image_url}" data-fancybox="gallery" data-caption="${project.project_name}" class="project-image">
+                                                                                                                                                                                                                                                                    <img src="${project.image_url}" alt="${project.project_name}">
+                                                                                                                                                                                                                                                                </a>` :
+                                        `<div class="no-image">Tidak ada gambar</div>`
+                                    }
+                                </div>
+                            </div>
+                        `;
+                    },
+
+                    getProjectIcon(status) {
+                        if (status === 'Selesai') {
+                            return this.getCompletedIcon();
+                        } else {
+                            return this.getOngoingIcon();
+                        }
+                    },
+
+                    getCompletedIcon() {
+                        return L.divIcon({
+                            className: 'custom-div-icon',
+                            html: "<div class='marker-pin completed'></div><i class='fas fa-check'></i>",
+                            iconSize: [30, 42],
+                            iconAnchor: [15, 42]
+                        });
+                    },
+
+                    getOngoingIcon() {
+                        return L.divIcon({
+                            className: 'custom-div-icon',
+                            html: "<div class='marker-pin ongoing'></div><i class='fas fa-clock'></i>",
+                            iconSize: [30, 42],
+                            iconAnchor: [15, 42]
+                        });
+                    },
+
                     getCarIcon() {
                         return L.divIcon({
                             className: 'custom-div-icon',
@@ -684,6 +1020,7 @@
                             iconAnchor: [15, 42]
                         });
                     },
+
 
                     getColorForVehicle(vehicleId) {
                         const colors = [

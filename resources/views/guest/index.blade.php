@@ -530,18 +530,18 @@
                         </div>
                         <div class="project-links">
                             ${project.documentation_link ?
-                            `<a href="${project.documentation_link}" target="_blank" class="doc-link">Dokumentasi</a>` :
-                            ''}
+                `<a href="${project.documentation_link}" target="_blank" class="doc-link">Dokumentasi</a>` :
+                ''}
                             <a href="https://www.google.com/maps/dir/?api=1&destination=${project.latitude},${project.longitude}" target="_blank" class="direction-link">Menuju Lokasi</a>
                         </div>
                     </div>
                     <div class="project-image-container">
                         ${project.image_url ?
-                            `<a href="${project.image_url}" data-fancybox="gallery" data-caption="${project.project_name}" class="project-image">
-                                                                <img src="${project.image_url}" alt="${project.project_name}">
-                                                            </a>` :
-                            `<div class="no-image">Tidak ada gambar</div>`
-                        }
+                `<a href="${project.image_url}" data-fancybox="gallery" data-caption="${project.project_name}" class="project-image">
+                                                                                        <img src="${project.image_url}" alt="${project.project_name}">
+                                                                                    </a>` :
+                `<div class="no-image">Tidak ada gambar</div>`
+            }
                     </div>
                 </div>
             `;
@@ -824,7 +824,8 @@
                                             }
                                         }
                                     }
-                                });
+                                }
+                            }
                         });
         </script>
     @endpush
