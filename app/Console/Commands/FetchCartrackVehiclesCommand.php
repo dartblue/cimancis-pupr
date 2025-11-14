@@ -6,14 +6,14 @@ use App\Models\CartrackVehicle;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
 
-class FetchVehiclesCommand extends Command
+class FetchCartrackVehiclesCommand extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'fetch:cartrack-vehicles';
+    protected $signature = 'cartrack:vehicles';
 
     /**
      * The console command description.

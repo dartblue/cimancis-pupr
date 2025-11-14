@@ -1,4 +1,17 @@
 <x-guest-layout>
+    @php
+        $totalEquipment = $heavyEquipments->count();
+        $readyCount = $heavyEquipments->where('status', 'ready')->count();
+        $operatingCount = $heavyEquipments->where('status', 'beroperasi')->count();
+        $maintenanceCount = $heavyEquipments->where('status', 'maintenance')->count();
+        $damagedCount = $heavyEquipments->where('status', 'rusak')->count();
+
+        $readyPercent = $totalEquipment > 0 ? number_format(($readyCount / $totalEquipment) * 100, 1) : 0;
+        $operatingPercent = $totalEquipment > 0 ? number_format(($operatingCount / $totalEquipment) * 100, 1) : 0;
+        $maintenancePercent = $totalEquipment > 0 ? number_format(($maintenanceCount / $totalEquipment) * 100, 1) : 0;
+        $damagedPercent = $totalEquipment > 0 ? number_format(($damagedCount / $totalEquipment) * 100, 1) : 0;
+    @endphp
+
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
             {{ __('Dashboard') }}
@@ -204,19 +217,11 @@
                                         <canvas id="equipmentStatusChart"></canvas>
                                     </div>
                                     <div class="text-sm">
-                                        <p class="font-semibold">Total Alat Berat: {{ $heavyEquipments->count() }}</p>
-                                        <p>Ready: {{ $heavyEquipments->where('status', 'ready')->count() }}
-                                            ({{ number_format(($heavyEquipments->where('status', 'ready')->count() / $heavyEquipments->count()) * 100, 1) }}%)
-                                        </p>
-                                        <p>Beroperasi: {{ $heavyEquipments->where('status', 'beroperasi')->count() }}
-                                            ({{ number_format(($heavyEquipments->where('status', 'beroperasi')->count() / $heavyEquipments->count()) * 100, 1) }}%)
-                                        </p>
-                                        <p>Maintenance: {{ $heavyEquipments->where('status', 'maintenance')->count() }}
-                                            ({{ number_format(($heavyEquipments->where('status', 'maintenance')->count() / $heavyEquipments->count()) * 100, 1) }}%)
-                                        </p>
-                                        <p>Rusak: {{ $heavyEquipments->where('status', 'rusak')->count() }}
-                                            ({{ number_format(($heavyEquipments->where('status', 'rusak')->count() / $heavyEquipments->count()) * 100, 1) }}%)
-                                        </p>
+                                        <p class="font-semibold">Total Alat Berat: {{ $totalEquipment }}</p>
+                                        <p>Ready: {{ $readyCount }} ({{ $readyPercent }}%)</p>
+                                        <p>Beroperasi: {{ $operatingCount }} ({{ $operatingPercent }}%)</p>
+                                        <p>Maintenance: {{ $maintenanceCount }} ({{ $maintenancePercent }}%)</p>
+                                        <p>Rusak: {{ $damagedCount }} ({{ $damagedPercent }}%)</p>
                                     </div>
                                 </div>
                             </div>
@@ -494,338 +499,328 @@
         <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-
         <script>
             document.addEventListener('DOMContentLoaded', function() {
-                        // Initialize the map
-                        var map = L.map('map').setView([-6.7, 108.5], 8);
+                // ========== MAP INITIALIZATION ==========
+                var map = L.map('map').setView([-6.7, 108.5], 8);
 
-                        // Define base layers
-                        var osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {});
+                // Define base layers
+                var osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; PU Cimancis'
+                });
 
-                        var satelliteLayer = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
-                            maxZoom: 30,
-                            subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-                        });
+                var satelliteLayer = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+                    maxZoom: 30,
+                    subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
+                });
 
-                        // Set default layer
-                        osmLayer.addTo(map);
+                // Set default layer
+                osmLayer.addTo(map);
 
-                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                            attribution: '&copy; PU Cimancis'
-                        }).addTo(map);
+                // ========== MARKER ICONS ==========
+                var completedIcon = L.icon({
+                    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [1, -34],
+                    shadowSize: [41, 41]
+                });
 
-                        // Create layer groups instead of marker clusters
-                        var completedGroup = L.featureGroup();
-                        var ongoingGroup = L.featureGroup();
+                var ongoingIcon = L.icon({
+                    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [1, -34],
+                    shadowSize: [41, 41]
+                });
 
-                        function createPopupContent(project) {
-                            return `
-                <div class="project-popup">
-                    <div class="project-info">
-                        <h3 class="project-title">${project.project_name}</h3>
-                        <div class="project-details">
-                            <p>${project.village_name}, ${project.district_name}</p>
-                            <p>${project.city_name}</p>
+                // ========== LAYER GROUPS ==========
+                var completedGroup = L.featureGroup();
+                var ongoingGroup = L.featureGroup();
+
+                // ========== POPUP CONTENT FUNCTION ==========
+                function createPopupContent(project) {
+                    return `
+                    <div class="project-popup">
+                        <div class="project-info">
+                            <h3 class="project-title">${project.project_name}</h3>
+                            <div class="project-details">
+                                <p>${project.village_name}, ${project.district_name}</p>
+                                <p>${project.city_name}</p>
+                            </div>
+                            <div class="project-links">
+                                ${project.documentation_link ?
+                                    `<a href="${project.documentation_link}" target="_blank" class="doc-link">Dokumentasi</a>` :
+                                    ''}
+                                <a href="https://www.google.com/maps/dir/?api=1&destination=${project.latitude},${project.longitude}"
+                                   target="_blank" class="direction-link">Menuju Lokasi</a>
+                            </div>
                         </div>
-                        <div class="project-links">
-                            ${project.documentation_link ?
-                            `<a href="${project.documentation_link}" target="_blank" class="doc-link">Dokumentasi</a>` :
-                            ''}
-                            <a href="https://www.google.com/maps/dir/?api=1&destination=${project.latitude},${project.longitude}" target="_blank" class="direction-link">Menuju Lokasi</a>
+                        <div class="project-image-container">
+                            ${project.image_url ?
+                                `<a href="${project.image_url}" data-fancybox="gallery" data-caption="${project.project_name}" class="project-image">
+                                                                                    <img src="${project.image_url}" alt="${project.project_name}">
+                                                                                </a>` :
+                                `<div class="no-image">Tidak ada gambar</div>`}
                         </div>
                     </div>
-                    <div class="project-image-container">
-                        ${project.image_url ?
-                            `<a href="${project.image_url}" data-fancybox="gallery" data-caption="${project.project_name}" class="project-image">
-                                                                <img src="${project.image_url}" alt="${project.project_name}">
-                                                            </a>` :
-                            `<div class="no-image">Tidak ada gambar</div>`
-                        }
-                    </div>
-                </div>
-            `;
-                        }
+                `;
+                }
 
-                        // Load markers in batches
-                        function loadMarkers(projects, group, icon) {
-                            projects.forEach(function(project) {
-                                if (project.latitude && project.longitude) {
-                                    var marker = L.marker([project.latitude, project.longitude], {
-                                            icon: icon
-                                        })
-                                        .bindPopup(createPopupContent(project), {
-                                            maxWidth: 300,
-                                            minWidth: 300
-                                        });
-
-                                    marker.on('popupopen', function() {
-                                        Fancybox.bind(this._popup._contentNode.querySelectorAll(
-                                            "[data-fancybox]"), {
-                                            dragToClose: false,
-                                            closeButton: "top-right",
-                                            Image: {
-                                                zoom: false,
-                                            },
-                                            Toolbar: {
-                                                display: [{
-                                                        id: "counter",
-                                                        position: "center"
-                                                    },
-                                                    "zoom",
-                                                    "slideshow",
-                                                    "fullscreen",
-                                                    "download",
-                                                    "close",
-                                                ],
-                                            },
-                                            Carousel: {
-                                                transition: false,
-                                                friction: 0,
-                                            },
-                                            on: {
-                                                initLayout: (fancybox) => {
-                                                    fancybox.$container.style.setProperty(
-                                                        "--fancybox-height", "100vh");
-                                                },
-                                            },
-                                        });
-                                    });
-
-                                    group.addLayer(marker);
-                                }
-                            });
-                        }
-
-                        // Load markers
-                        loadMarkers(@json($completedProjectsMap), completedGroup, completedIcon);
-                        loadMarkers(@json($ongoingProjectsMap), ongoingGroup, ongoingIcon);
-
-                        // Define icons
-                        var completedIcon = L.icon({
-                            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
-                            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-                            iconSize: [25, 41],
-                            iconAnchor: [12, 41],
-                            popupAnchor: [1, -34],
-                            shadowSize: [41, 41]
-                        });
-
-                        // Checkbox filter for project status
-                        function updateProjectLayers() {
-                            var completedCheckbox = document.getElementById('completedCheckbox');
-                            var ongoingCheckbox = document.getElementById('ongoingCheckbox');
-                            if (completedCheckbox && ongoingCheckbox) {
-                                if (completedCheckbox.checked) {
-                                    if (!map.hasLayer(completedGroup)) map.addLayer(completedGroup);
-                                } else {
-                                    if (map.hasLayer(completedGroup)) map.removeLayer(completedGroup);
-                                }
-                                if (ongoingCheckbox.checked) {
-                                    if (!map.hasLayer(ongoingGroup)) map.addLayer(ongoingGroup);
-                                } else {
-                                    if (map.hasLayer(ongoingGroup)) map.removeLayer(ongoingGroup);
-                                }
-                            }
-                        }
-
-                        // Initial call (in case checkboxes are unchecked by default)
-                        setTimeout(updateProjectLayers, 500);
-
-                        // Listen to checkbox changes
-                        document.addEventListener('change', function(e) {
-                            if (e.target && (e.target.id === 'completedCheckbox' || e.target.id ===
-                                    'ongoingCheckbox')) {
-                                updateProjectLayers();
-                            }
-                        });
-
-                        // Fit map to bounds
-                        var bounds = L.featureGroup([completedGroup, ongoingGroup]).getBounds();
-                        if (bounds.isValid()) {
-                            map.fitBounds(bounds, {
-                                padding: [50, 50],
-                                maxZoom: 10
-                            });
-                        }
-
-                        // Load markers
-                        loadMarkers(@json($completedProjectsMap), completedGroup, completedIcon);
-                        loadMarkers(@json($ongoingProjectsMap), ongoingGroup, ongoingIcon);
-
-                        var overlayMaps = {
-                            // "Proyek Selesai": completedGroup,
-                            // "Proyek Sedang Berlangsungs": ongoingGroup
-                        };
-                        L.control.layers(baseMaps, overlayMaps).addTo(map);
-
-                        // Fit map to bounds
-                        var bounds = L.featureGroup([completedGroup, ongoingGroup]).getBounds();
-                        if (bounds.isValid()) {
-                            map.fitBounds(bounds, {
-                                padding: [50, 50],
-                                maxZoom: 10
-                            });
-                        }
-
-                        // Define base maps and overlay maps
-                        var baseMaps = {
-                            "Default": osmLayer,
-                            "Satellite": satelliteLayer
-                        };
-
-                        var overlayMaps = {
-                            "Proyek Selesai": completedGroup,
-                            "Proyek Sedang Berlangsung": ongoingGroup
-                        };
-                        L.control.layers(baseMaps, overlayMaps).addTo(map);
-
-                        // Add legend
-                        var legend = L.control({
-                            position: 'bottomright'
-                        });
-                        legend.onAdd = function(map) {
-                            var div = L.DomUtil.create('div', 'info legend');
-                            div.innerHTML = `
-                <div class="bg-white p-2 rounded-lg shadow-md">
-                    <h4 class="font-semibold mb-2">Status Proyek</h4>
-                    <div class="flex items-center mb-1">
-                        <input type="checkbox" id="completedCheckbox" class="mr-2">
-                        <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png" alt="Completed" style="width: 12px; height: 20px;">
-                        <span class="ml-2">Proyek Selesai</span>
-                    </div>
-                    <div class="flex items-center">
-                        <input type="checkbox" id="ongoingCheckbox" checked class="mr-2">
-                        <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png" alt="Ongoing" style="width: 12px; height: 20px;">
-                        <span class="ml-2">Proyek Sedang Berlangsung</span>
-                    </div>
-                </div>
-            `;
-                            return div;
-                        };
-                        legend.addTo(map);
-
-                        var userLocationMarker;
-
-                        function addUserLocation() {
-                            if ("geolocation" in navigator) {
-                                navigator.geolocation.getCurrentPosition(function(position) {
-                                    var lat = position.coords.latitude;
-                                    var lon = position.coords.longitude;
-
-                                    if (userLocationMarker) {
-                                        map.removeLayer(userLocationMarker);
-                                    }
-
-                                    var userIcon = L.divIcon({
-                                        html: '📍',
-                                        iconSize: [30, 30],
-                                        iconAnchor: [20, 40],
-                                        popupAnchor: [0, -40],
-                                        className: 'user-location-icon'
-                                    });
-
-                                    userLocationMarker = L.marker([lat, lon], {
-                                        icon: userIcon
-                                    }).addTo(map);
-                                    userLocationMarker.bindPopup("Lokasi Anda").openPopup();
-
-                                    map.setView([lat, lon], 10);
-                                }, function(error) {
-                                    console.error("Error getting user location:", error);
+                // ========== LOAD MARKERS FUNCTION ==========
+                function loadMarkers(projects, group, icon) {
+                    projects.forEach(function(project) {
+                        if (project.latitude && project.longitude) {
+                            var marker = L.marker([project.latitude, project.longitude], {
+                                    icon: icon
+                                })
+                                .bindPopup(createPopupContent(project), {
+                                    maxWidth: 300,
+                                    minWidth: 300
                                 });
-                            } else {
-                                console.error("Geolocation is not supported by this browser.");
-                            }
+
+                            marker.on('popupopen', function() {
+                                Fancybox.bind(this._popup._contentNode.querySelectorAll(
+                                    "[data-fancybox]"), {
+                                    dragToClose: false,
+                                    closeButton: "top-right",
+                                    Image: {
+                                        zoom: false,
+                                    },
+                                    Toolbar: {
+                                        display: [{
+                                                id: "counter",
+                                                position: "center"
+                                            },
+                                            "zoom",
+                                            "slideshow",
+                                            "fullscreen",
+                                            "download",
+                                            "close",
+                                        ],
+                                    },
+                                    Carousel: {
+                                        transition: false,
+                                        friction: 0,
+                                    },
+                                    on: {
+                                        initLayout: (fancybox) => {
+                                            fancybox.$container.style.setProperty(
+                                                "--fancybox-height", "100vh");
+                                        },
+                                    },
+                                });
+                            });
+
+                            group.addLayer(marker);
+                        }
+                    });
+                }
+
+                // ========== LOAD PROJECT MARKERS ==========
+                loadMarkers(@json($completedProjectsMap), completedGroup, completedIcon);
+                loadMarkers(@json($ongoingProjectsMap), ongoingGroup, ongoingIcon);
+
+                // Add groups to map
+                completedGroup.addTo(map);
+                ongoingGroup.addTo(map);
+
+                // ========== LAYER CONTROL ==========
+                var baseMaps = {
+                    "Default": osmLayer,
+                    "Satellite": satelliteLayer
+                };
+
+                var overlayMaps = {
+                    "Proyek Selesai": completedGroup,
+                    "Proyek Sedang Berlangsung": ongoingGroup
+                };
+
+                L.control.layers(baseMaps, overlayMaps).addTo(map);
+
+                // ========== CHECKBOX FILTER ==========
+                function updateProjectLayers() {
+                    var completedCheckbox = document.getElementById('completedCheckbox');
+                    var ongoingCheckbox = document.getElementById('ongoingCheckbox');
+
+                    if (completedCheckbox && ongoingCheckbox) {
+                        if (completedCheckbox.checked) {
+                            if (!map.hasLayer(completedGroup)) map.addLayer(completedGroup);
+                        } else {
+                            if (map.hasLayer(completedGroup)) map.removeLayer(completedGroup);
                         }
 
-                        // Panggil fungsi untuk menambahkan lokasi pengguna
-                        addUserLocation();
+                        if (ongoingCheckbox.checked) {
+                            if (!map.hasLayer(ongoingGroup)) map.addLayer(ongoingGroup);
+                        } else {
+                            if (map.hasLayer(ongoingGroup)) map.removeLayer(ongoingGroup);
+                        }
+                    }
+                }
 
-                        // Tambahkan tombol untuk memperbarui lokasi pengguna
-                        var locationButton = L.control({
-                            position: 'topleft'
+                // Listen to checkbox changes
+                document.addEventListener('change', function(e) {
+                    if (e.target && (e.target.id === 'completedCheckbox' || e.target.id ===
+                            'ongoingCheckbox')) {
+                        updateProjectLayers();
+                    }
+                });
+
+                // Initial checkbox state
+                setTimeout(updateProjectLayers, 500);
+
+                // ========== MAP LEGEND ==========
+                var legend = L.control({
+                    position: 'bottomright'
+                });
+
+                legend.onAdd = function(map) {
+                    var div = L.DomUtil.create('div', 'info legend');
+                    div.innerHTML = `
+                    <div class="bg-white p-2 rounded-lg shadow-md">
+                        <h4 class="font-semibold mb-2">Status Proyek</h4>
+                        <div class="flex items-center mb-1">
+                            <input type="checkbox" id="completedCheckbox" class="mr-2">
+                            <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png"
+                                 alt="Completed" style="width: 12px; height: 20px;">
+                            <span class="ml-2">Proyek Selesai</span>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="ongoingCheckbox" checked class="mr-2">
+                            <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png"
+                                 alt="Ongoing" style="width: 12px; height: 20px;">
+                            <span class="ml-2">Proyek Sedang Berlangsung</span>
+                        </div>
+                    </div>
+                `;
+                    return div;
+                };
+
+                legend.addTo(map);
+
+                // ========== FIT MAP TO BOUNDS ==========
+                var bounds = L.featureGroup([completedGroup, ongoingGroup]).getBounds();
+                if (bounds.isValid()) {
+                    map.fitBounds(bounds, {
+                        padding: [50, 50],
+                        maxZoom: 10
+                    });
+                }
+
+                // ========== USER LOCATION ==========
+                var userLocationMarker;
+
+                function addUserLocation() {
+                    if ("geolocation" in navigator) {
+                        navigator.geolocation.getCurrentPosition(function(position) {
+                            var lat = position.coords.latitude;
+                            var lon = position.coords.longitude;
+
+                            if (userLocationMarker) {
+                                map.removeLayer(userLocationMarker);
+                            }
+
+                            var userIcon = L.divIcon({
+                                html: '📍',
+                                iconSize: [30, 30],
+                                iconAnchor: [20, 40],
+                                popupAnchor: [0, -40],
+                                className: 'user-location-icon'
+                            });
+
+                            userLocationMarker = L.marker([lat, lon], {
+                                icon: userIcon
+                            }).addTo(map);
+
+                            userLocationMarker.bindPopup("Lokasi Anda").openPopup();
+                            map.setView([lat, lon], 10);
+                        }, function(error) {
+                            console.error("Error getting user location:", error);
                         });
-                        locationButton.onAdd = function(map) {
-                            var div = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
-                            div.innerHTML =
-                                '<a href="#" title="Lokasi Saya" role="button" aria-label="Lokasi Saya" onclick="addUserLocation(); return false;"><span aria-hidden="true">📍</span></a>';
-                            return div;
-                        };
-                        locationButton.addTo(map);
+                    } else {
+                        console.error("Geolocation is not supported by this browser.");
+                    }
+                }
 
-                        // Initialize Chart
-                        var ctx = document.getElementById('equipmentStatusChart').getContext('2d');
-                        var readyCount = {{ $heavyEquipments->where('status', 'ready')->count() }};
-                        var operatingCount = {{ $heavyEquipments->where('status', 'beroperasi')->count() }};
-                        var maintenanceCount = {{ $heavyEquipments->where('status', 'maintenance')->count() }};
+                // Add location button
+                var locationButton = L.control({
+                    position: 'topleft'
+                });
 
-                        // Tambahkan tombol untuk memperbarui lokasi pengguna
-                        var locationButton = L.control({
-                            position: 'topleft'
-                        });
-                        locationButton.onAdd = function(map) {
-                            var div = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
-                            div.innerHTML =
-                                '<a href="#" title="Lokasi Saya" role="button" aria-label="Lokasi Saya" onclick="addUserLocation(); return false;"><span aria-hidden="true">📍</span></a>';
-                            return div;
-                        };
-                        locationButton.addTo(map);
+                locationButton.onAdd = function(map) {
+                    var div = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+                    div.innerHTML =
+                        '<a href="#" title="Lokasi Saya" role="button" aria-label="Lokasi Saya" onclick="addUserLocation(); return false;"><span aria-hidden="true">📍</span></a>';
+                    return div;
+                };
 
-                        // Initialize Chart
-                        var ctx = document.getElementById('equipmentStatusChart').getContext('2d');
-                        var readyCount = {{ $heavyEquipments->where('status', 'ready')->count() }};
-                        var operatingCount = {{ $heavyEquipments->where('status', 'beroperasi')->count() }};
-                        var maintenanceCount = {{ $heavyEquipments->where('status', 'maintenance')->count() }};
-                        var damagedCount = {{ $heavyEquipments->where('status', 'rusak')->count() }};
+                locationButton.addTo(map);
 
-                        new Chart(ctx, {
-                            type: 'pie',
-                            data: {
-                                labels: ['Ready', 'Beroperasi', 'Maintenance', 'Rusak'],
-                                datasets: [{
-                                    data: [readyCount, operatingCount, maintenanceCount, damagedCount],
-                                    backgroundColor: ['#10B981', '#2563EB', '#FFA500', '#DC2626']
-                                }]
-                            },
-                            options: {
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                interaction: {
-                                    mode: 'index',
-                                    intersect: false,
+                // Call function to add user location on load
+                addUserLocation();
+
+                // Make addUserLocation global for onclick handler
+                window.addUserLocation = addUserLocation;
+
+                // ========== EQUIPMENT STATUS CHART ==========
+                var ctx = document.getElementById('equipmentStatusChart');
+                console.log('Canvas element:', ctx);
+
+                if (ctx) {
+                    ctx = ctx.getContext('2d');
+                    console.log('Canvas context:', ctx);
+
+                    var readyCount = {{ $heavyEquipments->where('status', 'ready')->count() }};
+                    var operatingCount = {{ $heavyEquipments->where('status', 'beroperasi')->count() }};
+                    var maintenanceCount = {{ $heavyEquipments->where('status', 'maintenance')->count() }};
+                    var damagedCount = {{ $heavyEquipments->where('status', 'rusak')->count() }};
+
+                    console.log('Chart data:', {
+                        readyCount,
+                        operatingCount,
+                        maintenanceCount,
+                        damagedCount
+                    });
+
+                    new Chart(ctx, {
+                        type: 'pie',
+                        data: {
+                            labels: ['Ready', 'Beroperasi', 'Maintenance', 'Rusak'],
+                            datasets: [{
+                                data: [readyCount, operatingCount, maintenanceCount, damagedCount],
+                                backgroundColor: ['#10B981', '#2563EB', '#FFA500', '#DC2626']
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
                                 },
-                                plugins: {
-                                    legend: {
-                                        position: 'bottom',
-                                    },
-                                    options: {
-                                        responsive: true,
-                                        maintainAspectRatio: false,
-                                        interaction: {
-                                            mode: 'index',
-                                            intersect: false,
-                                        },
-                                        plugins: {
-                                            legend: {
-                                                position: 'bottom',
-                                            },
-                                            tooltip: {
-                                                usePointStyle: true,
-                                                callbacks: {
-                                                    label: function(context) {
-                                                        var label = context.label || '';
-                                                        var value = context.parsed || 0;
-                                                        var total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                                        var percentage = Math.round((value / total) * 100);
-                                                        return `${label}: ${value} (${percentage}%)`;
-                                                    }
-                                                }
-                                            }
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            var label = context.label || '';
+                                            var value = context.parsed || 0;
+                                            var total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                            var percentage = total > 0 ? Math.round((value / total) * 100) :
+                                                0;
+                                            return `${label}: ${value} (${percentage}%)`;
                                         }
                                     }
-                                });
-                        });
+                                }
+                            }
+                        }
+                    });
+
+                    console.log('Chart created successfully');
+                } else {
+                    console.error('Canvas element not found!');
+                }
+            });
         </script>
     @endpush
 </x-guest-layout>

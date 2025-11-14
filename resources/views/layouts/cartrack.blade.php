@@ -52,8 +52,8 @@
                     <nav class="hidden md:flex space-x-4">
                         <a href="{{ route('guest.index') }}"
                             class="text-white  px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('guest.index') ? 'bg-secondary' : '' }}">Home</a>
-                        <a href="{{ route('guest.project-map') }}"
-                            class="text-white  px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('guest.project-map') ? 'bg-secondary' : '' }}">Peta
+                        <a href="{{ route('guest.map') }}"
+                            class="text-white  px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('guest.map') ? 'bg-secondary' : '' }}">Peta
                             Pekerjaan</a>
                         @if (auth()->check())
                             @if (auth()->user()->hasRole('admin'))
@@ -76,8 +76,8 @@
                     <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
                         <a href="{{ route('guest.index') }}"
                             class="text-white  block px-3 py-2 rounded-md text-base font-medium {{ request()->routeIs('guest.index') ? 'bg-secondary' : '' }}">Home</a>
-                        <a href="{{ route('guest.project-map') }}"
-                            class="text-white  block px-3 py-2 rounded-md text-base font-medium {{ request()->routeIs('guest.project-map') ? 'bg-secondary' : '' }}">Peta
+                        <a href="{{ route('guest.map') }}"
+                            class="text-white  block px-3 py-2 rounded-md text-base font-medium {{ request()->routeIs('guest.map') ? 'bg-secondary' : '' }}">Peta
                             Pekerjaan</a>
                         @if (auth()->check())
                             @if (auth()->user()->hasRole('admin'))
