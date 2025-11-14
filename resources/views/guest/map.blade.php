@@ -303,20 +303,43 @@
         </div>
 
         <!-- Detail Tambahan di Bawah Map -->
-        <div x-show="detailVehicle" x-transition
-            class="fixed right-0 bottom-0 z-[1000] bg-white border-t shadow-lg p-6  mx-auto rounded-t-lg"
-            style="display: none;">
-            <h3 class="font-bold text-lg mb-2">Detail Tambahan Kendaraan</h3>
-            {{-- Silakan isi detail tambahan di sini --}}
-            <div>
-                <span class="font-semibold">Nomor Polisi:</span>
-                <span x-text="detailVehicle?.registration"></span>
+        <div x-show="detailVehicle" x-transition class="fixed bottom-0 z-[1000] bg-white border-t shadow-lg p-6"
+            :style="`left: ${detailVehicle ? '768px' : '384px'}; right: 0;`" style="display: none;">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-bold text-lg">Monitoring Kendaraan -
+                    <span
+                        x-text="new Date(startDate).toLocaleDateString('id-ID') + ' - ' + new Date(endDate).toLocaleDateString('id-ID')"></span>
+                </h3>
+                <button @click="detailVehicle = null; currentVehicle = null; destroyVehicleChart();"
+                    class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
             </div>
-            <div>
-                <span class="font-semibold">Merk & Model:</span>
-                <span x-text="detailVehicle?.manufacturer + ' ' + detailVehicle?.model"></span>
+
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <div class="h-64">
+                    <canvas id="vehicleMonitoringChart"></canvas>
+                </div>
+
+                <!-- Summary Stats -->
+                <div class="grid grid-cols-3 gap-4 mt-4">
+                    <div class="text-center">
+                        <div class="text-xs text-gray-600">PTO Average</div>
+                        <div class="text-lg font-semibold text-green-600" x-text="ptoAverage"></div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-xs text-gray-600">Battery Average</div>
+                        <div class="text-lg font-semibold text-blue-600" x-text="batteryAverage"></div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-xs text-gray-600">Fuel Average</div>
+                        <div class="text-lg font-semibold text-orange-600" x-text="fuelAverage"></div>
+                    </div>
+                </div>
             </div>
-            <!-- Tambahkan detail lain sesuai kebutuhan -->
         </div>
         <!-- End Detail Tambahan -->
     </div>
@@ -542,6 +565,7 @@
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
             integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
         <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script>
             function trackingMap() {
                 return {
@@ -562,6 +586,11 @@
                     projects: [],
                     searchQueryProject: '',
                     isLoading: false, // Tambahkan ini
+                    vehicleMonitoringChart: null,
+                    ptoAverage: '0%',
+                    batteryAverage: '0%',
+                    fuelAverage: '0%',
+
                     init() {
                         // Watch untuk searchQueryProject
                         this.$watch('searchQueryProject', (value) => {
@@ -577,6 +606,178 @@
                             }
                         });
                     },
+                    initVehicleMonitoringChart() {
+                        const ctx = document.getElementById('vehicleMonitoringChart');
+                        if (!ctx) return;
+
+                        // Destroy existing chart if any
+                        if (this.vehicleMonitoringChart) {
+                            this.vehicleMonitoringChart.destroy();
+                        }
+
+                        // Generate dummy data berdasarkan range tanggal
+                        const labels = [];
+                        const ptoData = [];
+                        const batteryData = [];
+                        const fuelData = [];
+
+                        const start = new Date(this.startDate);
+                        const end = new Date(this.endDate);
+                        const diffDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+
+                        // Generate data per hari
+                        for (let i = 0; i <= diffDays; i++) {
+                            const date = new Date(start);
+                            date.setDate(date.getDate() + i);
+                            labels.push(date.toLocaleDateString('id-ID', {
+                                day: '2-digit',
+                                month: 'short'
+                            }));
+
+                            // Dummy data dengan variasi realistis
+                            const ptoValue = Math.random() > 0.3 ? 100 : 0; // 70% aktif
+                            const batteryValue = 75 + Math.random() * 20; // 75-95%
+                            const fuelValue = 50 + Math.random() * 40 - (i * 2); // berkurang seiring waktu
+
+                            ptoData.push(ptoValue);
+                            batteryData.push(batteryValue.toFixed(1));
+                            fuelData.push(Math.max(20, fuelValue).toFixed(1));
+                        }
+
+                        // Hitung average
+                        const ptoAvg = ptoData.filter(v => v > 0).length / ptoData.length * 100;
+                        const batteryAvg = batteryData.reduce((sum, v) => sum + parseFloat(v), 0) / batteryData.length;
+                        const fuelAvg = fuelData.reduce((sum, v) => sum + parseFloat(v), 0) / fuelData.length;
+
+                        this.ptoAverage = ptoAvg.toFixed(0) + '% Active';
+                        this.batteryAverage = batteryAvg.toFixed(1) + '%';
+                        this.fuelAverage = fuelAvg.toFixed(1) + '%';
+
+                        this.vehicleMonitoringChart = new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                labels: labels,
+                                datasets: [{
+                                        label: 'PTO Status (%)',
+                                        data: ptoData,
+                                        borderColor: '#10B981',
+                                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                                        borderWidth: 2,
+                                        fill: false,
+                                        tension: 0.1,
+                                        yAxisID: 'y',
+                                        hidden: false
+                                    },
+                                    {
+                                        label: 'Battery Level (%)',
+                                        data: batteryData,
+                                        borderColor: '#3B82F6',
+                                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                        borderWidth: 2,
+                                        fill: false,
+                                        tension: 0.4,
+                                        yAxisID: 'y',
+                                        hidden: false
+                                    },
+                                    {
+                                        label: 'Fuel Level (%)',
+                                        data: fuelData,
+                                        borderColor: '#F59E0B',
+                                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                                        borderWidth: 2,
+                                        fill: false,
+                                        tension: 0.4,
+                                        yAxisID: 'y',
+                                        hidden: false
+                                    }
+                                ]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                interaction: {
+                                    mode: 'index',
+                                    intersect: false,
+                                },
+                                plugins: {
+                                    legend: {
+                                        display: true,
+                                        position: 'top',
+                                        labels: {
+                                            usePointStyle: true,
+                                            padding: 15,
+                                            font: {
+                                                size: 12
+                                            }
+                                        },
+                                        onClick: (e, legendItem, legend) => {
+                                            const index = legendItem.datasetIndex;
+                                            const chart = legend.chart;
+                                            const meta = chart.getDatasetMeta(index);
+
+                                            // Toggle visibility
+                                            meta.hidden = meta.hidden === null ? !chart.data.datasets[index]
+                                                .hidden : null;
+                                            chart.update();
+                                        }
+                                    },
+                                    tooltip: {
+                                        callbacks: {
+                                            label: function(context) {
+                                                let label = context.dataset.label || '';
+                                                if (label) {
+                                                    label += ': ';
+                                                }
+                                                if (context.parsed.y !== null) {
+                                                    if (context.datasetIndex === 0) {
+                                                        // PTO
+                                                        label += context.parsed.y > 0 ? 'Active (100%)' :
+                                                            'Inactive (0%)';
+                                                    } else {
+                                                        label += context.parsed.y + '%';
+                                                    }
+                                                }
+                                                return label;
+                                            }
+                                        }
+                                    }
+                                },
+                                scales: {
+                                    y: {
+                                        type: 'linear',
+                                        display: true,
+                                        position: 'left',
+                                        min: 0,
+                                        max: 100,
+                                        ticks: {
+                                            callback: function(value) {
+                                                return value + '%';
+                                            }
+                                        },
+                                        title: {
+                                            display: true,
+                                            text: 'Percentage (%)'
+                                        }
+                                    },
+                                    x: {
+                                        ticks: {
+                                            maxRotation: 45,
+                                            minRotation: 45
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    },
+
+                    destroyVehicleChart() {
+                        if (this.vehicleMonitoringChart) {
+                            this.vehicleMonitoringChart.destroy();
+                            this.vehicleMonitoringChart = null;
+                        }
+                    },
+
+
 
                     async searchProjects() {
                         this.isLoading = true;
@@ -681,32 +882,6 @@
                         this.years = await res.json();
                     },
 
-                    // initPageCartrack() {
-                    //     this.initMap();
-
-                    //     // inisialisasi flatpickr
-                    //     flatpickr("#dateRangeInput", {
-                    //         mode: "range",
-                    //         dateFormat: "Y-m-d",
-                    //         defaultDate: [
-                    //             this.startDate,
-                    //             this.endDate
-                    //         ],
-                    //         onChange: function(selectedDates, dateStr, instance) {
-                    //             // Kalau sudah pilih 2 tanggal (start & end)
-                    //             if (selectedDates.length === 2) {
-                    //                 const startDate = selectedDates[0].toISOString().split("T")[0];
-                    //                 const endDate = selectedDates[1].toISOString().split("T")[0];
-
-                    //                 // alert(`Kamu memilih range:\nStart: ${startDate}\nEnd: ${endDate}`);
-                    //                 console.log(
-                    //                     `Kamu memilih range:\nStart: ${startDate}\nEnd: ${endDate}\nVehicle: ${this.detailVehicle?.vehicle_id}`
-                    //                 );
-
-                    //             }
-                    //         }
-                    //     });
-                    // },
                     initPageCartrack() {
                         this.getYears();
                         this.initMap();
@@ -722,12 +897,32 @@
                             onChange: (selectedDates, dateStr, instance) => {
                                 // Kalau sudah pilih 2 tanggal (start & end)
                                 if (selectedDates.length === 2) {
-                                    // Update properti startDate dan endDate
-                                    this.startDate = selectedDates[0];
-                                    this.endDate = selectedDates[1];
+                                    const start = selectedDates[0];
+                                    const end = selectedDates[1];
 
-                                    const startDate = selectedDates[0].toISOString().split("T")[0];
-                                    const endDate = selectedDates[1].toISOString().split("T")[0];
+                                    // Hitung selisih hari
+                                    const diffTime = Math.abs(end - start);
+                                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                                    // Validasi maksimal 9 hari
+                                    if (diffDays > 9) {
+                                        alert('Rentang tanggal maksimal 9 hari!');
+
+                                        // Reset ke default (7 hari terakhir)
+                                        const defaultEnd = new Date();
+                                        const defaultStart = new Date();
+                                        defaultStart.setDate(defaultStart.getDate() - 7);
+
+                                        instance.setDate([defaultStart, defaultEnd]);
+                                        return;
+                                    }
+
+                                    // Update properti startDate dan endDate
+                                    this.startDate = start;
+                                    this.endDate = end;
+
+                                    const startDate = start.toISOString().split("T")[0];
+                                    const endDate = end.toISOString().split("T")[0];
 
                                     console.log(`Range berubah: ${startDate} - ${endDate}`);
 
@@ -805,80 +1000,8 @@
                         }
                     },
 
-                    // async showDetail(vehicle) {
-                    //     this.tab = 'semua';
-
-                    //     // Format ke YYYY-MM-DD (misalnya untuk query param API)
-                    //     const formatDate = (date) => {
-                    //         const year = date.getFullYear();
-                    //         const month = String(date.getMonth() + 1).padStart(2, '0');
-                    //         const day = String(date.getDate()).padStart(2, '0');
-
-                    //         return `${year}-${month}-${day}`;
-                    //     };
-
-                    //     const params = {
-                    //         startDate: formatDate(new Date(this.startDate)),
-                    //         endDate: formatDate(new Date(this.endDate)),
-                    //     };
-
-                    //     try {
-
-                    //         const res = await fetch('/api/cartrack-activities', {
-                    //             method: 'POST',
-                    //             headers: {
-                    //                 'Content-Type': 'application/json',
-                    //                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
-                    //                     'content')
-                    //             },
-                    //             body: JSON.stringify({
-                    //                 vehicleId: vehicle.vehicle_id,
-                    //                 ...params
-                    //             })
-                    //         });
-
-                    //         const data = await res.json();
-                    //         this.detailVehicle = data;
-                    //         console.log(data);
-
-                    //         // hapus semua polyline lama
-                    //         for (const vehicleId in this.polylines) {
-                    //             if (this.polylines[vehicleId]) this.polylines[vehicleId].remove();
-                    //         }
-
-                    //         // buat polyline perjalanan kendaraan yang dipilih
-                    //         const coords = [];
-                    //         data.forEach(p => {
-                    //             if (p.start_coordinates_latitude && p.start_coordinates_longitude) {
-                    //                 coords.push([parseFloat(p.start_coordinates_latitude), parseFloat(p
-                    //                     .start_coordinates_longitude)]);
-                    //             }
-                    //             if (p.end_coordinates_latitude && p.end_coordinates_longitude) {
-                    //                 coords.push([parseFloat(p.end_coordinates_latitude), parseFloat(p
-                    //                     .end_coordinates_longitude)]);
-                    //             }
-                    //         });
-
-                    //         if (coords.length > 0) {
-                    //             const color = this.getColorForVehicle(vehicle.vehicle_id);
-                    //             this.polylines[vehicle.vehicle_id] = L.polyline(coords, {
-                    //                 color: color,
-                    //                 weight: 3
-                    //             }).addTo(this.map);
-
-                    //             const last = coords[coords.length - 1];
-                    //             this.map.setView(last, 15, {
-                    //                 animate: true
-                    //             });
-                    //         }
-
-                    //     } catch (error) {
-                    //         console.log(error);
-                    //     }
-                    // },
-
                     async showDetail(vehicle) {
-                        this.currentVehicle = vehicle; // Simpan vehicle yang aktif
+                        this.currentVehicle = vehicle;
                         this.tab = 'semua';
 
                         // Format ke YYYY-MM-DD
@@ -950,6 +1073,208 @@
                         } catch (error) {
                             console.log('Error in showDetail:', error);
                         }
+
+                        // Initialize chart AFTER detailVehicle is set (moved outside try-catch)
+                        // Gunakan $nextTick untuk memastikan DOM sudah ready
+                        this.$nextTick(() => {
+                            setTimeout(() => {
+                                console.log('Initializing chart...');
+                                const canvas = document.getElementById('vehicleMonitoringChart');
+                                console.log('Canvas element:', canvas);
+
+                                if (canvas) {
+                                    this.initVehicleMonitoringChart();
+                                } else {
+                                    console.error('Canvas element not found!');
+                                }
+                            }, 200); // Tambah delay untuk memastikan DOM ready
+                        });
+                    },
+
+                    initVehicleMonitoringChart() {
+                        const ctx = document.getElementById('vehicleMonitoringChart');
+                        console.log('Chart init - Canvas element:', ctx);
+
+                        if (!ctx) {
+                            console.error('Canvas not found!');
+                            return;
+                        }
+
+                        // Destroy existing chart if any
+                        if (this.vehicleMonitoringChart) {
+                            console.log('Destroying existing chart...');
+                            this.vehicleMonitoringChart.destroy();
+                        }
+
+                        // Check if Chart.js is loaded
+                        if (typeof Chart === 'undefined') {
+                            console.error('Chart.js not loaded!');
+                            return;
+                        }
+
+                        // Generate dummy data berdasarkan range tanggal
+                        const labels = [];
+                        const ptoData = [];
+                        const batteryData = [];
+                        const fuelData = [];
+
+                        const start = new Date(this.startDate);
+                        const end = new Date(this.endDate);
+                        const diffDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+
+                        console.log(`Generating data for ${diffDays} days`);
+
+                        // Generate data per hari
+                        for (let i = 0; i <= diffDays; i++) {
+                            const date = new Date(start);
+                            date.setDate(date.getDate() + i);
+                            labels.push(date.toLocaleDateString('id-ID', {
+                                day: '2-digit',
+                                month: 'short'
+                            }));
+
+                            // Dummy data dengan variasi realistis
+                            const ptoValue = Math.random() > 0.3 ? 100 : 0; // 70% aktif
+                            const batteryValue = 75 + Math.random() * 20; // 75-95%
+                            const fuelValue = 50 + Math.random() * 40 - (i * 2); // berkurang seiring waktu
+
+                            ptoData.push(ptoValue);
+                            batteryData.push(parseFloat(batteryValue.toFixed(1)));
+                            fuelData.push(parseFloat(Math.max(20, fuelValue).toFixed(1)));
+                        }
+
+                        console.log('Chart data:', {
+                            labels,
+                            ptoData,
+                            batteryData,
+                            fuelData
+                        });
+
+                        // Hitung average
+                        const ptoAvg = ptoData.filter(v => v > 0).length / ptoData.length * 100;
+                        const batteryAvg = batteryData.reduce((sum, v) => sum + v, 0) / batteryData.length;
+                        const fuelAvg = fuelData.reduce((sum, v) => sum + v, 0) / fuelData.length;
+
+                        this.ptoAverage = ptoAvg.toFixed(0) + '% Active';
+                        this.batteryAverage = batteryAvg.toFixed(1) + '%';
+                        this.fuelAverage = fuelAvg.toFixed(1) + '%';
+
+                        try {
+                            this.vehicleMonitoringChart = new Chart(ctx, {
+                                type: 'line',
+                                data: {
+                                    labels: labels,
+                                    datasets: [{
+                                            label: 'PTO Status (%)',
+                                            data: ptoData,
+                                            borderColor: '#10B981',
+                                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                                            borderWidth: 2,
+                                            fill: false,
+                                            tension: 0.1,
+                                            yAxisID: 'y'
+                                        },
+                                        {
+                                            label: 'Battery Level (%)',
+                                            data: batteryData,
+                                            borderColor: '#3B82F6',
+                                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                            borderWidth: 2,
+                                            fill: false,
+                                            tension: 0.4,
+                                            yAxisID: 'y'
+                                        },
+                                        {
+                                            label: 'Fuel Level (%)',
+                                            data: fuelData,
+                                            borderColor: '#F59E0B',
+                                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                                            borderWidth: 2,
+                                            fill: false,
+                                            tension: 0.4,
+                                            yAxisID: 'y'
+                                        }
+                                    ]
+                                },
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    interaction: {
+                                        mode: 'index',
+                                        intersect: false,
+                                    },
+                                    plugins: {
+                                        legend: {
+                                            display: true,
+                                            position: 'top',
+                                            labels: {
+                                                usePointStyle: true,
+                                                padding: 15,
+                                                font: {
+                                                    size: 12
+                                                }
+                                            },
+                                            onClick: (e, legendItem, legend) => {
+                                                const index = legendItem.datasetIndex;
+                                                const chart = legend.chart;
+                                                const meta = chart.getDatasetMeta(index);
+
+                                                meta.hidden = meta.hidden === null ? !chart.data.datasets[index]
+                                                    .hidden : null;
+                                                chart.update();
+                                            }
+                                        },
+                                        tooltip: {
+                                            callbacks: {
+                                                label: function(context) {
+                                                    let label = context.dataset.label || '';
+                                                    if (label) {
+                                                        label += ': ';
+                                                    }
+                                                    if (context.parsed.y !== null) {
+                                                        if (context.datasetIndex === 0) {
+                                                            label += context.parsed.y > 0 ? 'Active (100%)' :
+                                                                'Inactive (0%)';
+                                                        } else {
+                                                            label += context.parsed.y.toFixed(1) + '%';
+                                                        }
+                                                    }
+                                                    return label;
+                                                }
+                                            }
+                                        }
+                                    },
+                                    scales: {
+                                        y: {
+                                            type: 'linear',
+                                            display: true,
+                                            position: 'left',
+                                            min: 0,
+                                            max: 100,
+                                            ticks: {
+                                                callback: function(value) {
+                                                    return value + '%';
+                                                }
+                                            },
+                                            title: {
+                                                display: true,
+                                                text: 'Percentage (%)'
+                                            }
+                                        },
+                                        x: {
+                                            ticks: {
+                                                maxRotation: 45,
+                                                minRotation: 45
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+
+                            console.log('Chart created successfully:', this.vehicleMonitoringChart);
+                        } catch (error) {
+                            console.error('Error creating chart:', error);
+                        }
                     },
 
                     formatLatLon(v) {
@@ -977,8 +1302,8 @@
                                 <div class="project-image-container">
                                     ${project.image_url ?
                                         `<a href="${project.image_url}" data-fancybox="gallery" data-caption="${project.project_name}" class="project-image">
-                                                                                                                                                                                                                                                                    <img src="${project.image_url}" alt="${project.project_name}">
-                                                                                                                                                                                                                                                                </a>` :
+                                                                                                                                                                                                                                                                                                                                                    <img src="${project.image_url}" alt="${project.project_name}">
+                                                                                                                                                                                                                                                                                                                                                </a>` :
                                         `<div class="no-image">Tidak ada gambar</div>`
                                     }
                                 </div>
