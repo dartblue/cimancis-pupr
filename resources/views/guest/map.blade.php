@@ -303,40 +303,66 @@
         </div>
 
         <!-- Detail Tambahan di Bawah Map -->
-        <div x-show="detailVehicle" x-transition class="fixed bottom-0 z-[1000] bg-white border-t shadow-lg p-6"
-            :style="`left: ${detailVehicle ? '768px' : '384px'}; right: 0;`" style="display: none;">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="font-bold text-lg">Monitoring Kendaraan -
-                    <span
-                        x-text="new Date(startDate).toLocaleDateString('id-ID') + ' - ' + new Date(endDate).toLocaleDateString('id-ID')"></span>
-                </h3>
-                <button @click="detailVehicle = null; currentVehicle = null; destroyVehicleChart();"
-                    class="text-gray-500 hover:text-gray-700">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
+        <div x-show="detailVehicle" x-transition class="fixed bottom-0 z-[1000] bg-white border-t shadow-lg"
+            :style="`left: ${detailVehicle ? '768px' : '384px'}; right: 0; height: ${chartHeight}px;`"
+            style="display: none; min-height: 200px; max-height: 600px;">
+
+            <!-- Resize Handle -->
+            <div @mousedown="startResize($event)"
+                class="absolute top-0 left-0 right-0 h-2 cursor-ns-resize hover:bg-blue-200 flex items-center justify-center group">
+                <div class="w-12 h-1 bg-gray-300 rounded group-hover:bg-blue-500 transition"></div>
             </div>
 
-            <div class="bg-gray-50 p-4 rounded-lg">
-                <div class="h-64">
-                    <canvas id="vehicleMonitoringChart"></canvas>
+            <div class="p-4 h-full flex flex-col">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="font-bold text-base">Monitoring Kendaraan -
+                        <span class="text-sm"
+                            x-text="new Date(startDate).toLocaleDateString('id-ID') + ' - ' + new Date(endDate).toLocaleDateString('id-ID')"></span>
+                    </h3>
+                    <button @click="detailVehicle = null; currentVehicle = null; destroyVehicleChart();"
+                        class="text-gray-500 hover:text-gray-700">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
                 </div>
 
-                <!-- Summary Stats -->
-                <div class="grid grid-cols-3 gap-4 mt-4">
-                    <div class="text-center">
-                        <div class="text-xs text-gray-600">PTO Average</div>
-                        <div class="text-lg font-semibold text-green-600" x-text="ptoAverage"></div>
+                <div class="bg-gray-50 p-3 rounded-lg relative flex-1 overflow-y-auto">
+                    <!-- Loading Overlay untuk Chart -->
+                    <div x-show="isChartLoading" x-transition
+                        class="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center rounded-lg z-10">
+                        <div class="text-center">
+                            <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto mb-2"
+                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10"
+                                    stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                </path>
+                            </svg>
+                            <p class="text-xs text-gray-600 font-semibold">Memuat data monitoring...</p>
+                        </div>
                     </div>
-                    <div class="text-center">
-                        <div class="text-xs text-gray-600">Battery Average</div>
-                        <div class="text-lg font-semibold text-blue-600" x-text="batteryAverage"></div>
+
+                    <div :style="`height: ${chartCanvasHeight}px;`" class="min-h-[120px]">
+                        <canvas id="vehicleMonitoringChart"></canvas>
                     </div>
-                    <div class="text-center">
-                        <div class="text-xs text-gray-600">Fuel Average</div>
-                        <div class="text-lg font-semibold text-orange-600" x-text="fuelAverage"></div>
+
+                    <!-- Summary Stats -->
+                    <div class="grid grid-cols-3 gap-2 mt-2">
+                        <div class="text-center bg-white p-2 rounded shadow-sm">
+                            <div class="text-xs text-gray-600">PTO Average</div>
+                            <div class="text-sm font-semibold text-green-600" x-text="ptoAverage"></div>
+                        </div>
+                        <div class="text-center bg-white p-2 rounded shadow-sm">
+                            <div class="text-xs text-gray-600">Battery Average</div>
+                            <div class="text-sm font-semibold text-blue-600" x-text="batteryAverage"></div>
+                        </div>
+                        <div class="text-center bg-white p-2 rounded shadow-sm">
+                            <div class="text-xs text-gray-600">Fuel Average</div>
+                            <div class="text-sm font-semibold text-orange-600" x-text="fuelAverage"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -558,6 +584,23 @@
             .leaflet-control-attribution {
                 display: none !important;
             }
+
+            /* Resize Handle Styles */
+            .cursor-ns-resize {
+                cursor: ns-resize !important;
+            }
+
+            .cursor-ns-resize:active {
+                cursor: ns-resize !important;
+            }
+
+            /* Prevent text selection during resize */
+            .resizing * {
+                user-select: none !important;
+                -webkit-user-select: none !important;
+                -moz-user-select: none !important;
+                -ms-user-select: none !important;
+            }
         </style>
     @endpush
 
@@ -586,10 +629,58 @@
                     projects: [],
                     searchQueryProject: '',
                     isLoading: false, // Tambahkan ini
+                    isChartLoading: false,
                     vehicleMonitoringChart: null,
                     ptoAverage: '0%',
                     batteryAverage: '0%',
                     fuelAverage: '0%',
+                    ptoRawData: [],
+                    fuelRawData: [],
+                    batteryRawData: [],
+
+                    // Tambahkan properti untuk resize
+                    chartHeight: 300, // Default height 300px
+                    isResizing: false,
+                    startY: 0,
+                    startHeight: 0,
+
+                    // Computed property untuk canvas height
+                    get chartCanvasHeight() {
+                        // Canvas height = total height - padding - header - stats
+                        return this.chartHeight - 140; // 140px untuk padding, header, stats
+                    },
+
+                    // Method untuk start resize
+                    startResize(event) {
+                        this.isResizing = true;
+                        this.startY = event.clientY;
+                        this.startHeight = this.chartHeight;
+
+                        event.preventDefault();
+
+                        const handleMove = (e) => {
+                            if (!this.isResizing) return;
+
+                            const deltaY = this.startY - e.clientY;
+                            let newHeight = this.startHeight + deltaY;
+                            newHeight = Math.max(200, Math.min(600, newHeight));
+
+                            this.chartHeight = newHeight;
+
+                            if (this.vehicleMonitoringChart) {
+                                this.vehicleMonitoringChart.resize();
+                            }
+                        };
+
+                        const handleUp = () => {
+                            this.isResizing = false;
+                            document.removeEventListener('mousemove', handleMove);
+                            document.removeEventListener('mouseup', handleUp);
+                        };
+
+                        document.addEventListener('mousemove', handleMove);
+                        document.addEventListener('mouseup', handleUp);
+                    },
 
                     init() {
                         // Watch untuk searchQueryProject
@@ -603,169 +694,6 @@
                         this.$watch('selectedYear', (value) => {
                             if (this.asideTab === 'proyek') {
                                 this.searchProjects();
-                            }
-                        });
-                    },
-                    initVehicleMonitoringChart() {
-                        const ctx = document.getElementById('vehicleMonitoringChart');
-                        if (!ctx) return;
-
-                        // Destroy existing chart if any
-                        if (this.vehicleMonitoringChart) {
-                            this.vehicleMonitoringChart.destroy();
-                        }
-
-                        // Generate dummy data berdasarkan range tanggal
-                        const labels = [];
-                        const ptoData = [];
-                        const batteryData = [];
-                        const fuelData = [];
-
-                        const start = new Date(this.startDate);
-                        const end = new Date(this.endDate);
-                        const diffDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
-
-                        // Generate data per hari
-                        for (let i = 0; i <= diffDays; i++) {
-                            const date = new Date(start);
-                            date.setDate(date.getDate() + i);
-                            labels.push(date.toLocaleDateString('id-ID', {
-                                day: '2-digit',
-                                month: 'short'
-                            }));
-
-                            // Dummy data dengan variasi realistis
-                            const ptoValue = Math.random() > 0.3 ? 100 : 0; // 70% aktif
-                            const batteryValue = 75 + Math.random() * 20; // 75-95%
-                            const fuelValue = 50 + Math.random() * 40 - (i * 2); // berkurang seiring waktu
-
-                            ptoData.push(ptoValue);
-                            batteryData.push(batteryValue.toFixed(1));
-                            fuelData.push(Math.max(20, fuelValue).toFixed(1));
-                        }
-
-                        // Hitung average
-                        const ptoAvg = ptoData.filter(v => v > 0).length / ptoData.length * 100;
-                        const batteryAvg = batteryData.reduce((sum, v) => sum + parseFloat(v), 0) / batteryData.length;
-                        const fuelAvg = fuelData.reduce((sum, v) => sum + parseFloat(v), 0) / fuelData.length;
-
-                        this.ptoAverage = ptoAvg.toFixed(0) + '% Active';
-                        this.batteryAverage = batteryAvg.toFixed(1) + '%';
-                        this.fuelAverage = fuelAvg.toFixed(1) + '%';
-
-                        this.vehicleMonitoringChart = new Chart(ctx, {
-                            type: 'line',
-                            data: {
-                                labels: labels,
-                                datasets: [{
-                                        label: 'PTO Status (%)',
-                                        data: ptoData,
-                                        borderColor: '#10B981',
-                                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                                        borderWidth: 2,
-                                        fill: false,
-                                        tension: 0.1,
-                                        yAxisID: 'y',
-                                        hidden: false
-                                    },
-                                    {
-                                        label: 'Battery Level (%)',
-                                        data: batteryData,
-                                        borderColor: '#3B82F6',
-                                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                                        borderWidth: 2,
-                                        fill: false,
-                                        tension: 0.4,
-                                        yAxisID: 'y',
-                                        hidden: false
-                                    },
-                                    {
-                                        label: 'Fuel Level (%)',
-                                        data: fuelData,
-                                        borderColor: '#F59E0B',
-                                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
-                                        borderWidth: 2,
-                                        fill: false,
-                                        tension: 0.4,
-                                        yAxisID: 'y',
-                                        hidden: false
-                                    }
-                                ]
-                            },
-                            options: {
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                interaction: {
-                                    mode: 'index',
-                                    intersect: false,
-                                },
-                                plugins: {
-                                    legend: {
-                                        display: true,
-                                        position: 'top',
-                                        labels: {
-                                            usePointStyle: true,
-                                            padding: 15,
-                                            font: {
-                                                size: 12
-                                            }
-                                        },
-                                        onClick: (e, legendItem, legend) => {
-                                            const index = legendItem.datasetIndex;
-                                            const chart = legend.chart;
-                                            const meta = chart.getDatasetMeta(index);
-
-                                            // Toggle visibility
-                                            meta.hidden = meta.hidden === null ? !chart.data.datasets[index]
-                                                .hidden : null;
-                                            chart.update();
-                                        }
-                                    },
-                                    tooltip: {
-                                        callbacks: {
-                                            label: function(context) {
-                                                let label = context.dataset.label || '';
-                                                if (label) {
-                                                    label += ': ';
-                                                }
-                                                if (context.parsed.y !== null) {
-                                                    if (context.datasetIndex === 0) {
-                                                        // PTO
-                                                        label += context.parsed.y > 0 ? 'Active (100%)' :
-                                                            'Inactive (0%)';
-                                                    } else {
-                                                        label += context.parsed.y + '%';
-                                                    }
-                                                }
-                                                return label;
-                                            }
-                                        }
-                                    }
-                                },
-                                scales: {
-                                    y: {
-                                        type: 'linear',
-                                        display: true,
-                                        position: 'left',
-                                        min: 0,
-                                        max: 100,
-                                        ticks: {
-                                            callback: function(value) {
-                                                return value + '%';
-                                            }
-                                        },
-                                        title: {
-                                            display: true,
-                                            text: 'Percentage (%)'
-                                        }
-                                    },
-                                    x: {
-                                        ticks: {
-                                            maxRotation: 45,
-                                            minRotation: 45
-                                        }
-                                    }
-                                }
                             }
                         });
                     },
@@ -828,6 +756,7 @@
                             this.isLoading = false;
                         }
                     },
+
                     get filteredVehicles() {
                         if (!this.searchQuery) return this.vehicles;
                         const q = this.searchQuery.toLowerCase();
@@ -982,7 +911,7 @@
 
                                 // Buat marker baru setiap kali load
                                 this.markers[v.vehicle_id] = L.marker([lastLat, lastLon], {
-                                        icon: this.getCarIcon()
+                                        icon: this.getCarIcon(v.latest_activity.events_idle)
                                     }).addTo(this.map)
                                     .bindPopup(
                                         `<b>${v.heavy_equipment.length > 0 ? v.heavy_equipment[0].name : v.manufacturer}</b><br>Lat: ${lastLat}<br>Lon: ${lastLon}`
@@ -1001,6 +930,7 @@
                     async showDetail(vehicle) {
                         this.currentVehicle = vehicle;
                         this.tab = 'semua';
+                        this.isChartLoading = true; // Mulai loading
 
                         // Format ke YYYY-MM-DD
                         const formatDate = (date) => {
@@ -1016,6 +946,7 @@
                         };
 
                         try {
+                            // Fetch cartrack activities
                             const res = await fetch('/api/cartrack-activities', {
                                 method: 'POST',
                                 headers: {
@@ -1031,7 +962,14 @@
 
                             const data = await res.json();
                             this.detailVehicle = data;
-                            console.log('Data received:', data);
+                            console.log('Activities data received:', data);
+
+                            // Fetch semua data secara parallel untuk lebih cepat
+                            await Promise.all([
+                                this.fetchPTOData(vehicle.registration),
+                                this.fetchFuelData(vehicle.registration),
+                                this.fetchBatteryData(vehicle.registration)
+                            ]);
 
                             // hapus semua polyline lama
                             for (const vehicleId in this.polylines) {
@@ -1070,10 +1008,11 @@
 
                         } catch (error) {
                             console.log('Error in showDetail:', error);
+                        } finally {
+                            this.isChartLoading = false; // Selesai loading
                         }
 
-                        // Initialize chart AFTER detailVehicle is set (moved outside try-catch)
-                        // Gunakan $nextTick untuk memastikan DOM sudah ready
+                        // Initialize chart AFTER all data fetched
                         this.$nextTick(() => {
                             setTimeout(() => {
                                 console.log('Initializing chart...');
@@ -1085,8 +1024,180 @@
                                 } else {
                                     console.error('Canvas element not found!');
                                 }
-                            }, 200); // Tambah delay untuk memastikan DOM ready
+                            }, 200);
                         });
+                    },
+
+                    async fetchPTOData(registration) {
+                        try {
+                            // Format tanggal untuk API Cartrack
+                            const formatCartrackDate = (date) => {
+                                const d = new Date(date);
+                                const year = d.getFullYear();
+                                const month = String(d.getMonth() + 1).padStart(2, '0');
+                                const day = String(d.getDate()).padStart(2, '0');
+                                return `${year}-${month}-${day}`;
+                            };
+
+                            const startDate = formatCartrackDate(this.startDate) + ' 00:00:00';
+                            const endDate = formatCartrackDate(this.endDate) + ' 23:59:59';
+
+                            console.log('Fetching PTO data for:', registration, 'from', startDate, 'to', endDate);
+
+                            let allPTOData = [];
+                            let currentPage = 1;
+                            let lastPage = 1;
+
+                            // Loop untuk fetch semua page
+                            do {
+                                const response = await fetch(
+                                    `https://fleetapi-id.cartrack.com/rest/vehicles/${registration}/power-takeoff?start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}&page=${currentPage}&per_page=100`, {
+                                        method: 'GET',
+                                        headers: {
+                                            'Authorization': 'Basic T1BFUjAwMDE5OmU5MTEzNzc2Y2ZjZDZhN2Q5OTAxYWI5NGU1NWRjY2MyYzU4MjU4Zjg4N2RlNTc0ZTg0MmFjZGQ4YmM2NDAwOWU=',
+                                            'Content-Type': 'application/json',
+                                        }
+                                    }
+                                );
+
+                                if (!response.ok) {
+                                    throw new Error(`HTTP error! status: ${response.status}`);
+                                }
+
+                                const ptoData = await response.json();
+                                console.log(`PTO data page ${currentPage} received:`, ptoData);
+
+                                // Tambahkan data dari page ini
+                                if (ptoData.data && ptoData.data.length > 0) {
+                                    allPTOData = allPTOData.concat(ptoData.data);
+                                }
+
+                                // Update lastPage dari meta
+                                if (ptoData.meta && ptoData.meta.last_page) {
+                                    lastPage = ptoData.meta.last_page;
+                                }
+
+                                currentPage++;
+                            } while (currentPage <= lastPage);
+
+                            console.log('Total PTO data fetched:', allPTOData.length);
+
+                            // Simpan data PTO untuk digunakan di chart
+                            this.ptoRawData = allPTOData;
+
+                            return {
+                                data: allPTOData,
+                                total: allPTOData.length
+                            };
+                        } catch (error) {
+                            console.error('Error fetching PTO data:', error);
+                            this.ptoRawData = [];
+                            return null;
+                        }
+                    },
+
+                    async fetchFuelData(registration) {
+                        try {
+                            // Format tanggal untuk API Cartrack
+                            const formatCartrackDate = (date) => {
+                                const d = new Date(date);
+                                const year = d.getFullYear();
+                                const month = String(d.getMonth() + 1).padStart(2, '0');
+                                const day = String(d.getDate()).padStart(2, '0');
+                                return `${year}-${month}-${day}`;
+                            };
+
+                            const startTimestamp = formatCartrackDate(this.startDate) + ' 00:00:00';
+                            const endTimestamp = formatCartrackDate(this.endDate) + ' 23:59:59';
+
+                            console.log('Fetching Fuel data for:', registration, 'from', startTimestamp, 'to',
+                                endTimestamp);
+
+                            let allFuelData = [];
+                            let currentPage = 1;
+                            let lastPage = 1;
+
+                            // Loop untuk fetch semua page
+                            do {
+                                const response = await fetch(
+                                    `https://fleetapi-id.cartrack.com/rest/fuel/fills/${registration}?start_timestamp=${encodeURIComponent(startTimestamp)}&end_timestamp=${encodeURIComponent(endTimestamp)}&page=${currentPage}&per_page=100`, {
+                                        method: 'GET',
+                                        headers: {
+                                            'Authorization': 'Basic T1BFUjAwMDE5OmU5MTEzNzc2Y2ZjZDZhN2Q5OTAxYWI5NGU1NWRjY2MyYzU4MjU4Zjg4N2RlNTc0ZTg0MmFjZGQ4YmM2NDAwOWU=',
+                                            'Content-Type': 'application/json',
+                                        }
+                                    }
+                                );
+
+                                if (!response.ok) {
+                                    throw new Error(`HTTP error! status: ${response.status}`);
+                                }
+
+                                const fuelData = await response.json();
+                                console.log(`Fuel data page ${currentPage} received:`, fuelData);
+
+                                // Tambahkan data dari page ini
+                                if (fuelData.data && fuelData.data.length > 0) {
+                                    allFuelData = allFuelData.concat(fuelData.data);
+                                }
+
+                                // Update lastPage dari meta
+                                if (fuelData.meta && fuelData.meta.last_page) {
+                                    lastPage = fuelData.meta.last_page;
+                                }
+
+                                currentPage++;
+                            } while (currentPage <= lastPage);
+
+                            console.log('Total fuel data fetched:', allFuelData.length);
+
+                            // Simpan data Fuel untuk digunakan di chart
+                            this.fuelRawData = allFuelData;
+
+                            return {
+                                data: allFuelData,
+                                total: allFuelData.length
+                            };
+                        } catch (error) {
+                            console.error('Error fetching Fuel data:', error);
+                            this.fuelRawData = [];
+                            return null;
+                        }
+                    },
+
+                    async fetchBatteryData(registration) {
+                        try {
+                            console.log('Fetching Battery data for:', registration);
+
+                            const response = await fetch(
+                                `https://fleetapi-id.cartrack.com/rest/vehicles/battery?filter[registration]=${registration}`, {
+                                    method: 'GET',
+                                    headers: {
+                                        'Authorization': 'Basic T1BFUjAwMDE5OmU5MTEzNzc2Y2ZjZDZhN2Q5OTAxYWI5NGU1NWRjY2MyYzU4MjU4Zjg4N2RlNTc0ZTg0MmFjZGQ4YmM2NDAwOWU=',
+                                        'Content-Type': 'application/json',
+                                    }
+                                }
+                            );
+
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! status: ${response.status}`);
+                            }
+
+                            const batteryData = await response.json();
+                            console.log('Battery data received:', batteryData);
+
+                            // Simpan data Battery untuk digunakan di chart
+                            this.batteryRawData = batteryData.data || [];
+
+                            return {
+                                data: batteryData.data || [],
+                                total: batteryData.data ? batteryData.data.length : 0
+                            };
+                        } catch (error) {
+                            console.error('Error fetching Battery data:', error);
+                            this.batteryRawData = [];
+                            return null;
+                        }
                     },
 
                     initVehicleMonitoringChart() {
@@ -1110,7 +1221,7 @@
                             return;
                         }
 
-                        // Generate dummy data berdasarkan range tanggal
+                        // Generate data berdasarkan range tanggal
                         const labels = [];
                         const ptoData = [];
                         const batteryData = [];
@@ -1122,23 +1233,116 @@
 
                         console.log(`Generating data for ${diffDays} days`);
 
+                        // Process PTO data from API
+                        const ptoDataByDate = {};
+                        if (this.ptoRawData && this.ptoRawData.length > 0) {
+                            this.ptoRawData.forEach(pto => {
+                                const dateStr = pto.event_time.split(' ')[0];
+                                const status = pto.status === 'Active' ? 100 : 0;
+
+                                if (!ptoDataByDate[dateStr]) {
+                                    ptoDataByDate[dateStr] = [];
+                                }
+                                ptoDataByDate[dateStr].push(status);
+                            });
+
+                            console.log('PTO data by date:', ptoDataByDate);
+                        }
+
+                        // Process Fuel data from API
+                        const fuelDataByDate = {};
+                        let initialFuelLevel = 100; // Asumsi tank penuh di awal
+
+                        if (this.fuelRawData && this.fuelRawData.length > 0) {
+                            // Sort by timestamp
+                            const sortedFuelData = [...this.fuelRawData].sort((a, b) =>
+                                new Date(a.fill_timestamp) - new Date(b.fill_timestamp)
+                            );
+
+                            sortedFuelData.forEach(fuel => {
+                                const dateStr = fuel.fill_timestamp.split(' ')[0];
+                                const fillAmount = parseFloat(fuel.fill_amount_litres) || 0;
+
+                                if (!fuelDataByDate[dateStr]) {
+                                    fuelDataByDate[dateStr] = {
+                                        fills: [],
+                                        totalFill: 0
+                                    };
+                                }
+                                fuelDataByDate[dateStr].fills.push(fillAmount);
+                                fuelDataByDate[dateStr].totalFill += fillAmount;
+                            });
+
+                            console.log('Fuel data by date:', fuelDataByDate);
+                        }
+
+                        // Process Battery data from API
+                        const batteryDataByDate = {};
+
+                        if (this.batteryRawData && this.batteryRawData.length > 0) {
+                            this.batteryRawData.forEach(battery => {
+                                // Parse battery_ts: "2023-02-08 11:06:29+02"
+                                const dateStr = battery.battery_ts.split(' ')[0]; // "2023-02-08"
+                                const batteryLevel = parseFloat(battery.battery_percentage_left) || 0;
+
+                                if (!batteryDataByDate[dateStr]) {
+                                    batteryDataByDate[dateStr] = [];
+                                }
+                                batteryDataByDate[dateStr].push(batteryLevel);
+                            });
+
+                            console.log('Battery data by date:', batteryDataByDate);
+                        }
+
                         // Generate data per hari
+                        let currentFuelLevel = initialFuelLevel;
+
+                        // Update bagian generate data per hari:
                         for (let i = 0; i <= diffDays; i++) {
                             const date = new Date(start);
                             date.setDate(date.getDate() + i);
-                            labels.push(date.toLocaleDateString('id-ID', {
+
+                            const dateStr = date.toLocaleDateString('id-ID', {
                                 day: '2-digit',
                                 month: 'short'
-                            }));
+                            });
 
-                            // Dummy data dengan variasi realistis
-                            const ptoValue = Math.random() > 0.3 ? 100 : 0; // 70% aktif
-                            const batteryValue = 75 + Math.random() * 20; // 75-95%
-                            const fuelValue = 50 + Math.random() * 40 - (i * 2); // berkurang seiring waktu
+                            const apiDateStr = date.toISOString().split('T')[0];
 
-                            ptoData.push(ptoValue);
-                            batteryData.push(parseFloat(batteryValue.toFixed(1)));
-                            fuelData.push(parseFloat(Math.max(20, fuelValue).toFixed(1)));
+                            labels.push(dateStr);
+
+                            // PTO data dari API
+                            if (ptoDataByDate[apiDateStr] && ptoDataByDate[apiDateStr].length > 0) {
+                                const avgStatus = ptoDataByDate[apiDateStr].reduce((sum, val) => sum + val, 0) / ptoDataByDate[
+                                    apiDateStr].length;
+                                ptoData.push(avgStatus);
+                            } else {
+                                ptoData.push(0);
+                            }
+
+                            // Battery data dari API (REAL DATA)
+                            if (batteryDataByDate[apiDateStr] && batteryDataByDate[apiDateStr].length > 0) {
+                                // Hitung rata-rata battery level dalam sehari
+                                const avgBattery = batteryDataByDate[apiDateStr].reduce((sum, val) => sum + val, 0) /
+                                    batteryDataByDate[apiDateStr].length;
+                                batteryData.push(parseFloat(avgBattery.toFixed(1)));
+                            } else {
+                                // Jika tidak ada data battery, gunakan data sebelumnya atau default
+                                const lastBattery = batteryData.length > 0 ? batteryData[batteryData.length - 1] : 85;
+                                batteryData.push(lastBattery);
+                            }
+
+                            // Fuel data dari API
+                            if (fuelDataByDate[apiDateStr]) {
+                                currentFuelLevel = Math.max(0, currentFuelLevel - 5);
+                                currentFuelLevel = Math.min(100, currentFuelLevel + (fuelDataByDate[apiDateStr].totalFill / 50 *
+                                    100));
+                            } else {
+                                const consumptionRate = ptoDataByDate[apiDateStr] ? 5 : 2;
+                                currentFuelLevel = Math.max(0, currentFuelLevel - consumptionRate);
+                            }
+
+                            fuelData.push(parseFloat(currentFuelLevel.toFixed(1)));
                         }
 
                         console.log('Chart data:', {
@@ -1231,8 +1435,14 @@
                                                     }
                                                     if (context.parsed.y !== null) {
                                                         if (context.datasetIndex === 0) {
-                                                            label += context.parsed.y > 0 ? 'Active (100%)' :
-                                                                'Inactive (0%)';
+                                                            const value = context.parsed.y;
+                                                            if (value === 100) {
+                                                                label += 'Active (100%)';
+                                                            } else if (value === 0) {
+                                                                label += 'Inactive (0%)';
+                                                            } else {
+                                                                label += value.toFixed(1) + '% Active';
+                                                            }
                                                         } else {
                                                             label += context.parsed.y.toFixed(1) + '%';
                                                         }
@@ -1300,8 +1510,8 @@
                                 <div class="project-image-container">
                                     ${project.image_url ?
                                         `<a href="${project.image_url}" data-fancybox="gallery" data-caption="${project.project_name}" class="project-image">
-                                                                                                                                                                                                                                                                                                                                                            <img src="${project.image_url}" alt="${project.project_name}">
-                                                                                                                                                                                                                                                                                                                                                        </a>` :
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <img src="${project.image_url}" alt="${project.project_name}">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                </a>` :
                                         `<div class="no-image">Tidak ada gambar</div>`
                                     }
                                 </div>
@@ -1335,15 +1545,23 @@
                         });
                     },
 
-                    getCarIcon() {
-                        return L.divIcon({
-                            className: 'custom-div-icon',
-                            html: "<div class='marker-pin completed'></div><i class='fas fa-check'></i>",
-                            iconSize: [30, 42],
-                            iconAnchor: [15, 42]
-                        });
+                    getCarIcon(idleStatus = null) {
+                        if (idleStatus > 0) {
+                            return L.divIcon({
+                                className: 'custom-div-icon',
+                                html: "<div class='marker-pin completed'></div><i class='fas fa-check'></i>",
+                                iconSize: [30, 42],
+                                iconAnchor: [15, 42]
+                            });
+                        } else {
+                            return L.divIcon({
+                                className: 'custom-div-icon',
+                                html: "<div class='marker-pin ongoing'></div><i class='fas fa-clock'></i>",
+                                iconSize: [30, 42],
+                                iconAnchor: [15, 42]
+                            });
+                        }
                     },
-
 
                     getColorForVehicle(vehicleId) {
                         const colors = [
@@ -1352,6 +1570,7 @@
                         ];
                         return colors[vehicleId % colors.length];
                     },
+
                     getOngoingTrips() {
                         if (!this.detailVehicle) return [];
 
@@ -1389,31 +1608,6 @@
                         });
 
                         console.log(`Total seconds: ${totalSeconds}`);
-                        const hours = Math.floor(totalSeconds / 3600);
-                        const minutes = Math.floor((totalSeconds % 3600) / 60);
-
-                        if (hours > 0) {
-                            return `${hours} jam ${minutes} menit`;
-                        }
-                        return `${minutes} menit`;
-                    },
-
-                    totalDistance(positions) {
-                        // Fungsi yang sudah ada, sesuaikan dengan struktur data baru
-                        if (!positions) return 0;
-                        return positions.reduce((sum, p) => sum + (parseFloat(p.trip_distance) || 0), 0).toFixed(2);
-                    },
-
-                    totalDuration(positions) {
-                        // Fungsi yang sudah ada, sesuaikan dengan struktur data baru
-                        if (!positions) return '0 menit';
-                        let totalSeconds = 0;
-                        positions.forEach(p => {
-                            if (p.trip_duration_seconds) {
-                                totalSeconds += parseInt(p.trip_duration_seconds);
-                            }
-                        });
-
                         const hours = Math.floor(totalSeconds / 3600);
                         const minutes = Math.floor((totalSeconds % 3600) / 60);
 
