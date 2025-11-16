@@ -52,6 +52,6 @@ class CartrackVehicleActivity extends Model
      */
     public function cartrack_vehicle(): BelongsTo
     {
-        return $this->belongsTo(CartrackVehicle::class, 'cartrack_vehicle_id');
+        return $this->belongsTo(CartrackVehicle::class, 'cartrack_vehicle_id', 'vehicle_id');
     }
 }

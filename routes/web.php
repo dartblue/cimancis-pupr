@@ -15,6 +15,7 @@ use App\Http\Controllers\ProjectMapController;
 use App\Http\Controllers\HeavyEquipmentController;
 use App\Http\Controllers\OperatorHelperController;
 use App\Http\Controllers\WorkAssignmentController;
+use App\Http\Controllers\CartrackVehicleController;
 use App\Http\Controllers\CartrackActivityController;
 use App\Http\Controllers\CompletedProjectController;
 use App\Http\Controllers\FieldConditionPhotoController;
@@ -118,6 +119,11 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
         Route::get('/completed-projects', [CompletedProjectController::class, 'apiIndex']);
     });
 
+    Route::prefix('cartrack-vehicle')->group(function () {
+        Route::get('/', [CartrackVehicleController::class, 'index'])->name('cartrack-vehicle.index');
+    });
+
+    // Cartrack Vehicle routes
     Route::prefix('cartrack-activity')->group(function () {
         Route::get('/', [CartrackActivityController::class, 'index'])->name('cartrack-activity.index');
     });
@@ -141,6 +147,9 @@ Route::get('/api/projects', [GuestController::class, 'getProjects'])
 // Cartrack API for web
 Route::get('/api/cartrack-vehicles', [CartrackActivityController::class, 'getCartrackVehicles'])
     ->name('api.cartrack-vehicles');
+
+Route::post('/api/sync-cartrack', [CartrackVehicleController::class, 'syncCartrack'])->name('cartrack-vehicle.sync-cartrack');
+Route::post('/api/sync-cartrack-with-heavy-equipment', [CartrackVehicleController::class, 'syncCartrackWithHeavyEquipment'])->name('cartrack-vehicle.sync-cartrack-with-heavy-equipment');
 
 Route::post('/api/cartrack-activities', [CartrackActivityController::class, 'cartrackActivities']);
 
