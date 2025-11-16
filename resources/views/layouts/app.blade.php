@@ -14,6 +14,7 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <!-- Styles -->
     {{-- <link rel="stylesheet" href="{{ asset('css/app.css') }}?v={{ time() }}"> --}}
     @vite('resources/css/app.css')
@@ -99,6 +100,13 @@
                                     'M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
                             ],
                             [
+                                'name' => 'Cartrack Vehicles',
+                                'route' => 'cartrack-vehicle.index',
+                                'pattern' => 'admin/cartrack-vehicle*',
+                                'icon' =>
+                                    'M3 10h18M3 14h18M5 6h.01M9 6h.01M13 6h.01M17 6h.01M5 18h.01M9 18h.01M13 18h.01M17 18h.01',
+                            ],
+                            [
                                 'name' => 'Cartrack Activity',
                                 'route' => 'cartrack-activity.index',
                                 'pattern' => 'admin/cartrack-activity*',
@@ -160,6 +168,7 @@
     </div>
     @vite('resources/js/app.js')
     @stack('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 </body>
 
 </html>

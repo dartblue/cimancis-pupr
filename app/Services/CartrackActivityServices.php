@@ -8,20 +8,11 @@ use App\Models\CartrackVehicleActivity;
 
 class CartrackActivityServices
 {
-    public function fetchCartrackActivities() {}
 
     public function syncCartrackActivities($input)
     {
-        if (!isset($input['last_sync'])) {
-            return [
-                'success' => false,
-                'status' => 'error',
-                'message' => 'Parameter last_sync diperlukan.',
-            ];
-        }
-
-        $startDate = date('Y-m-d H:i:s', strtotime($input['last_sync'] . ' 00:00:00'));
-        $endDate = now()->endOfDay()->format('Y-m-d H:i:s');
+        $startDate = $input['start_timestamp'] ?? now()->startOfDay()->format('Y-m-d H:i:s');
+        $endDate = $input['end_timestamp'] ?? now()->endOfDay()->format('Y-m-d H:i:s');
 
         try {
             $page = 1;

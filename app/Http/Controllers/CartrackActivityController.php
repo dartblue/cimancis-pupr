@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\CartrackVehicle;
 use App\Models\CartrackVehicleActivity;
 use App\Services\CartrackActivityServices;
+use Illuminate\Support\Facades\Validator;
 
 class CartrackActivityController extends Controller
 {
@@ -21,9 +22,9 @@ class CartrackActivityController extends Controller
         $last_sync = '';
         $cartrack_activities = CartrackVehicleActivity::query();
         if ($cartrack_activities) {
-            $last_sync = $cartrack_activities->max('created_at');
+            $last_sync = $cartrack_activities->max('end_timestamp');
         }
-        $cartrack_activities = $cartrack_activities->paginate(10);
+        $cartrack_activities = $cartrack_activities->with(['cartrack_vehicle.heavyEquipment'])->simplePaginate(10);
         return view('cartrack-activity.index', compact('cartrack_activities', 'last_sync'));
     }
 
@@ -54,25 +55,50 @@ class CartrackActivityController extends Controller
 
     public function syncCartrackActivity(Request $request)
     {
-        $input = $request->all();
+        $validator = Validator::make($request->all(), [
+            'start_timestamp' => 'required|date',
+            'end_timestamp' => 'required|date|after_or_equal:start_timestamp',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 422,
+                'success' => false,
+                'message' => 'Invalid input data.',
+                'errors' => $validator->errors(),
+                'data' => null
+            ], 422);
+        }
+
+        $input['start_timestamp'] = $request->start_timestamp . ' 00:00:00';
+        $input['end_timestamp'] = $request->end_timestamp . ' 23:59:59';
+
         $result = $this->cartrackActivityServices->syncCartrackActivities($input);
 
         try {
             //code...
             if ($result['success']) {
                 return response()->json([
+                    'status' => 200,
+                    'success' => true,
                     'message' => 'Cartrack activities synced successfully.',
                     'data'  => $request->last_sync
-                ]);
+                ], 200);
             } else {
                 return response()->json([
+                    'status' => 500,
+                    'success' => false,
                     'message' => $result['message'],
+                    'data'  => null
                 ], 500);
             }
         } catch (\Exception $th) {
             //throw $th;
             return response()->json([
+                'status' => 500,
+                'success' => false,
                 'message' => 'Terjadi kesalahan saat menyinkronkan data: ' . $th->getMessage(),
+                'data' => null
             ], 500);
         }
     }

@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Cartrack Activity') }}
+            {{ __('Cartrack Power Take Off') }}
         </h2>
     </x-slot>
 
@@ -20,7 +20,7 @@
                         </div>
                         <div class="flex items-center space-x-4 justify-center">
                             <x-text-input id="sync_date" placeholder="Periode" class="mt-2" />
-                            <button type="button"
+                            <button type="button" id="sync-cartrack-power-take-off"
                                 class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
                                 <svg class="mr-2 -ml-1 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none"
                                     viewBox="0 0 24 24" stroke="currentColor">
@@ -42,32 +42,25 @@
                                         No.</th>
                                     <th scope="col"
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Trip ID</th>
-                                    <th scope="col"
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Kendaraan Berat</th>
                                     <th scope="col"
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Cartrack Vehicle</th>
                                     <th scope="col"
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Lokasi Awal</th>
+                                        Event Time</th>
                                     <th scope="col"
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Lokasi Akhir</th>
-                                    <th scope="col"
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Durasi Trip</th>
+                                        Status</th>
                                     <th
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
-                                @forelse ($cartrack_activities as $key => $item)
+                                @forelse ($cartrackPowerTakeOffService as $key => $item)
                                     <tr>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm">{{ $key + 1 }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm">{{ $item->trip_id }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm">
                                             <a href="{{ route('alat-berat.edit', ['alat_berat' => $item->cartrack_vehicle->heavyEquipment()->first() ? $item->cartrack_vehicle->heavyEquipment()->first()->id : '#']) }}"
                                                 class="text-blue-600 hover:text-blue-800 hover:underline transition-colors duration-200">
@@ -77,12 +70,10 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm">
                                             {{ $item->cartrack_vehicle ? $item->cartrack_vehicle->manufacturer . ' ' . $item->cartrack_vehicle->model : 'N/A' }}
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm">{{ $item->start_location }}
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm">{{ $item->event_time }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                            {{ $item->end_location ?? '-' }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                            {{ $item->trip_duration ?? '-' }}</td>
+                                            {{ $item->status ?? '-' }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                             <a href="#"
                                                 class="text-indigo-600 hover:text-indigo-900 mr-2">Lihat</a>
@@ -98,7 +89,7 @@
 
                     {{-- Pagination --}}
                     <div class="mt-6">
-                        {{ $cartrack_activities->links() }}
+                        {{ $cartrackPowerTakeOffService->links() }}
                     </div>
                 </div>
             </div>
@@ -109,14 +100,14 @@
         <script>
             document.addEventListener('DOMContentLoaded', function() {
 
-                const lastSyncInput = document.getElementById('last_sync_raw').value;
+                const lastSyncInput = document.getElementById('last_sync_raw').value || new Date();
 
                 flatpickr("#sync_date", {
                     mode: "range",
                     dateFormat: "Y-m-d",
                     defaultDate: [
                         lastSyncInput,
-                        new Date(lastSyncInput).setDate(new Date(lastSyncInput).getDate() + 7)
+                        new Date(lastSyncInput).setDate(new Date(lastSyncInput).getDate() + 1)
                     ],
                     onChange: (selectedDates, dateStr, instance) => {
                         // Kalau sudah pilih 2 tanggal (start & end)
@@ -129,13 +120,13 @@
                             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
                             // Validasi maksimal 9 hari
-                            if (diffDays > 9) {
-                                alert('Rentang tanggal maksimal 9 hari!');
+                            if (diffDays > 1) {
+                                alert('Rentang tanggal maksimal 1 hari!');
 
-                                // Reset ke default (7 hari terakhir)
+                                // Reset ke default (1 hari terakhir)
                                 const defaultEnd = new Date();
                                 const defaultStart = new Date();
-                                defaultStart.setDate(defaultStart.getDate() - 7);
+                                defaultStart.setDate(defaultStart.getDate() - 1);
 
                                 instance.setDate([defaultStart, defaultEnd]);
                                 return;
@@ -144,13 +135,14 @@
                     }
                 });
 
-                const syncButton = document.querySelector('button[type="button"]');
+                const syncButton = document.getElementById('sync-cartrack-power-take-off');
                 syncButton.addEventListener('click', function() {
+
                     const sync_date = document.getElementById('sync_date').value;
                     syncButton.disabled = true;
                     syncButton.textContent = 'Menyinkronkan...';
 
-                    fetch('/api/sync-cartrack-activity', {
+                    fetch('/api/sync-cartrack-power-take-off', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
