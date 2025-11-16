@@ -2,9 +2,8 @@
 
 namespace App\Console\Commands;
 
-use App\Models\CartrackVehicle;
+use App\Services\CartrackVehicleServices;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Http;
 
 class FetchCartrackVehiclesCommand extends Command
 {
@@ -22,6 +21,14 @@ class FetchCartrackVehiclesCommand extends Command
      */
     protected $description = 'Fetch list kendaraan dari Cartrack API dan simpan ke database';
 
+    protected $cartrackService;
+
+    public function __construct(CartrackVehicleServices $cartrackService)
+    {
+        parent::__construct();
+        $this->cartrackService = $cartrackService;
+    }
+
     /**
      * Execute the console command.
      */
@@ -31,48 +38,17 @@ class FetchCartrackVehiclesCommand extends Command
         $this->info('Mulai fetch data kendaraan dari Cartrack...');
 
         try {
-            $page = 1;
+            // Panggil method syncCartrackData dari service
+            $result = $this->cartrackService->syncCartrackData();
 
-            do {
-                $response = Http::withHeaders([
-                    'Authorization' => 'Basic ' . config('services.cartrack.token'),
-                ])->get("https://fleetapi-id.cartrack.com/rest/vehicles", [
-                    'page' => $page,
-                    'per_page' => 10,
-                ]);
-
-                if ($response->failed()) {
-                    $this->error('Gagal fetch data dari Cartrack: ' . $response->body());
-                    return Command::FAILURE;
-                }
-
-                $data = $response->json();
-
-                foreach ($data['data'] as $vehicle) {
-                    CartrackVehicle::updateOrCreate(
-                        ['vehicle_id' => $vehicle['vehicle_id']],
-                        [
-                            'terminal_id'   => $vehicle['terminal_id'],
-                            'terminal_serial'   => $vehicle['terminal_serial'],
-                            'registration'  => $vehicle['registration'],
-                            'vehicle_name'  => $vehicle['vehicle_name'],
-                            'manufacturer'  => $vehicle['manufacturer'],
-                            'model'         => $vehicle['model'],
-                            'model_year'    => $vehicle['model_year'],
-                            'colour'        => $vehicle['colour'],
-                            'chassis_number' => $vehicle['chassis_number'],
-                        ]
-                    );
-                }
-
-                $this->info("Page {$page} selesai diproses...");
-
-                $page++;
-                $lastPage = $data['meta']['last_page'] ?? 1;
-            } while ($page <= $lastPage);
-
-            $this->info('Selesai sync semua kendaraan 🚗');
-            return Command::SUCCESS;
+            if ($result['success']) {
+                $this->info($result['message']);
+                $this->info("Total kendaraan yang diproses: {$result['total']}");
+                return Command::SUCCESS;
+            } else {
+                $this->error($result['message']);
+                return Command::FAILURE;
+            }
         } catch (\Exception $e) {
             $this->error('Error: ' . $e->getMessage());
             return Command::FAILURE;

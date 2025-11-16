@@ -15,6 +15,7 @@ use App\Http\Controllers\ProjectMapController;
 use App\Http\Controllers\HeavyEquipmentController;
 use App\Http\Controllers\OperatorHelperController;
 use App\Http\Controllers\WorkAssignmentController;
+use App\Http\Controllers\CartrackVehicleController;
 use App\Http\Controllers\CartrackActivityController;
 use App\Http\Controllers\CompletedProjectController;
 use App\Http\Controllers\FieldConditionPhotoController;
@@ -118,8 +119,18 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
         Route::get('/completed-projects', [CompletedProjectController::class, 'apiIndex']);
     });
 
+    // Cartrack Vehicle routes
+    Route::prefix('cartrack-vehicle')->group(function () {
+        Route::get('/', [CartrackVehicleController::class, 'index'])->name('cartrack-vehicle.index');
+    });
+
+    // Cartrack Activity routes
     Route::prefix('cartrack-activity')->group(function () {
         Route::get('/', [CartrackActivityController::class, 'index'])->name('cartrack-activity.index');
+    });
+
+    Route::prefix('cartrack-power-take-off')->group(function () {
+        Route::get('/', [App\Http\Controllers\CartrackPowerTakeOffController::class, 'index'])->name('cartrack-power-take-off.index');
     });
 });
 
@@ -142,7 +153,13 @@ Route::get('/api/projects', [GuestController::class, 'getProjects'])
 Route::get('/api/cartrack-vehicles', [CartrackActivityController::class, 'getCartrackVehicles'])
     ->name('api.cartrack-vehicles');
 
+Route::post('/api/sync-cartrack', [CartrackVehicleController::class, 'syncCartrack'])->name('cartrack-vehicle.sync-cartrack');
+Route::post('/api/sync-cartrack-with-heavy-equipment', [CartrackVehicleController::class, 'syncCartrackWithHeavyEquipment'])->name('cartrack-vehicle.sync-cartrack-with-heavy-equipment');
+
 Route::post('/api/cartrack-activities', [CartrackActivityController::class, 'cartrackActivities']);
 
 Route::post('/api/sync-cartrack-activity', [CartrackActivityController::class, 'syncCartrackActivity'])
     ->name('api.sync-cartrack-activity');
+
+Route::post('/api/sync-cartrack-power-take-off', [App\Http\Controllers\CartrackPowerTakeOffController::class, 'syncCartrackPowerTakeOff'])
+    ->name('api.sync-cartrack-power-take-off');
