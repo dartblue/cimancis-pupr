@@ -119,13 +119,18 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
         Route::get('/completed-projects', [CompletedProjectController::class, 'apiIndex']);
     });
 
+    // Cartrack Vehicle routes
     Route::prefix('cartrack-vehicle')->group(function () {
         Route::get('/', [CartrackVehicleController::class, 'index'])->name('cartrack-vehicle.index');
     });
 
-    // Cartrack Vehicle routes
+    // Cartrack Activity routes
     Route::prefix('cartrack-activity')->group(function () {
         Route::get('/', [CartrackActivityController::class, 'index'])->name('cartrack-activity.index');
+    });
+
+    Route::prefix('cartrack-power-take-off')->group(function () {
+        Route::get('/', [App\Http\Controllers\CartrackPowerTakeOffController::class, 'index'])->name('cartrack-power-take-off.index');
     });
 });
 
@@ -155,3 +160,6 @@ Route::post('/api/cartrack-activities', [CartrackActivityController::class, 'car
 
 Route::post('/api/sync-cartrack-activity', [CartrackActivityController::class, 'syncCartrackActivity'])
     ->name('api.sync-cartrack-activity');
+
+Route::post('/api/sync-cartrack-power-take-off', [App\Http\Controllers\CartrackPowerTakeOffController::class, 'syncCartrackPowerTakeOff'])
+    ->name('api.sync-cartrack-power-take-off');

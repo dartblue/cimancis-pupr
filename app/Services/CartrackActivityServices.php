@@ -11,7 +11,6 @@ class CartrackActivityServices
 
     public function syncCartrackActivities($input)
     {
-
         $startDate = $input['start_timestamp'] ?? now()->startOfDay()->format('Y-m-d H:i:s');
         $endDate = $input['end_timestamp'] ?? now()->endOfDay()->format('Y-m-d H:i:s');
 
