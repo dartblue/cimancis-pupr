@@ -30,7 +30,13 @@ class GuestController extends Controller
         $availableEquipments = HeavyEquipment::where('status', 'ready')->count();
         $availableOperators = User::where('status', 'tersedia')->get();
 
-        $heavyEquipments = HeavyEquipment::all();
+        $heavyEquipments = HeavyEquipment::whereIn('status', [
+            'ready',
+            'beroperasi',
+            'maintenance',
+            'rusak'
+        ])->get();
+
         $stillProjects = WorkAssignment::where('status', 'Sedang Berlangsung')
             ->count();
         $endProjects = WorkAssignment::where('status', 'Selesai')

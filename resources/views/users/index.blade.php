@@ -105,7 +105,7 @@
                                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                                                     {{ ucfirst($user->status) }}
                                                 </span>
-                                            @elseif($user->status == 'tidak_tersedia')
+                                            @elseif($user->status == 'tidak ada')
                                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
                                                     {{ ucwords(str_replace('_',' ',$user->status)) }}
                                                 </span>

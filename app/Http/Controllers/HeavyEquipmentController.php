@@ -179,7 +179,8 @@ class HeavyEquipmentController extends Controller
             return redirect()->route('alat-berat.index')->with('error', 'Alat berat tidak ditemukan.');
         }
 
-        $heavyEquipment->delete();
+        $heavyEquipment->status = 'tidak ada';
+        $heavyEquipment->save();
 
         return redirect()->route('alat-berat.index')->with('success', 'Alat berat berhasil dihapus.');
     }

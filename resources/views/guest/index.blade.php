@@ -17,7 +17,7 @@
                     </div>
                     <div class="ml-4">
                         <h3 class="text-lg font-semibold text-green-800">Project Selesai</h3>
-                        <p class="text-3xl font-bold text-green-900">{{ $endProjects }}</p>
+                        <p class="text-3xl font-bold text-green-900">{{ $endProjects }} Lokasi</p>
                     </div>
                 </div>
 
@@ -32,7 +32,7 @@
                     </div>
                     <div class="ml-4">
                         <h3 class="text-lg font-semibold text-yellow-800">Project Sedang Berlangsung</h3>
-                        <p class="text-3xl font-bold text-yellow-900">{{ $stillProjects }}</p>
+                        <p class="text-3xl font-bold text-yellow-900">{{ $stillProjects }} Lokasi</p>
                     </div>
                 </div>
             </div>
@@ -119,7 +119,7 @@
                                     <table class="table-auto w-full">
                                         <thead>
                                             <tr class="bg-gray-200 sticky top-0 z-10">
-                                                <th class="px-4 py-2 text-left">Nama Operator</th>
+                                                <th class="px-4 py-2 text-left">Nama Personil</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -487,40 +487,23 @@
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-        <script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@4.0/dist/fancybox.umd.js"></script>
-        <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
         // Initialize the map
         var map = L.map('map').setView([-6.7, 108.5], 8);
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                // ========== MAP INITIALIZATION ==========
-                var map = L.map('map').setView([-6.7, 108.5], 8);
 
         // Define base layers
         var osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         });
-                // Define base layers
-                var osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '&copy; PU Cimancis'
-                });
 
         var satelliteLayer = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
             maxZoom: 30,
             subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
         });
-                var satelliteLayer = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
-                    maxZoom: 30,
-                    subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
-                });
 
         // Set default layer
         osmLayer.addTo(map);
-                // Set default layer
-                osmLayer.addTo(map);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; PU Cimancis'
@@ -529,28 +512,6 @@
         // Create layer groups instead of marker clusters
         var completedGroup = L.featureGroup();
         var ongoingGroup = L.featureGroup();
-                // ========== MARKER ICONS ==========
-                var completedIcon = L.icon({
-                    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
-                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-                    iconSize: [25, 41],
-                    iconAnchor: [12, 41],
-                    popupAnchor: [1, -34],
-                    shadowSize: [41, 41]
-                });
-
-                var ongoingIcon = L.icon({
-                    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-                    iconSize: [25, 41],
-                    iconAnchor: [12, 41],
-                    popupAnchor: [1, -34],
-                    shadowSize: [41, 41]
-                });
-
-                // ========== LAYER GROUPS ==========
-                var completedGroup = L.featureGroup();
-                var ongoingGroup = L.featureGroup();
 
         function createPopupContent(project) {
             return `
@@ -579,34 +540,6 @@
                 </div>
             `;
         }
-                // ========== POPUP CONTENT FUNCTION ==========
-                function createPopupContent(project) {
-                    return `
-                    <div class="project-popup">
-                        <div class="project-info">
-                            <h3 class="project-title">${project.project_name}</h3>
-                            <div class="project-details">
-                                <p>${project.village_name}, ${project.district_name}</p>
-                                <p>${project.city_name}</p>
-                            </div>
-                            <div class="project-links">
-                                ${project.documentation_link ?
-                                    `<a href="${project.documentation_link}" target="_blank" class="doc-link">Dokumentasi</a>` :
-                                    ''}
-                                <a href="https://www.google.com/maps/dir/?api=1&destination=${project.latitude},${project.longitude}"
-                                   target="_blank" class="direction-link">Menuju Lokasi</a>
-                            </div>
-                        </div>
-                        <div class="project-image-container">
-                            ${project.image_url ?
-                                `<a href="${project.image_url}" data-fancybox="gallery" data-caption="${project.project_name}" class="project-image">
-                                            <img src="${project.image_url}" alt="${project.project_name}">
-                                        </a>` :
-                                `<div class="no-image">Tidak ada gambar</div>`}
-                        </div>
-                    </div>
-                `;
-                }
 
         // Load markers in batches
         function loadMarkers(projects, group, icon) {
@@ -614,17 +547,6 @@
                 if (project.latitude && project.longitude) {
                     var marker = L.marker([project.latitude, project.longitude], {icon: icon})
                         .bindPopup(createPopupContent(project), {maxWidth: 300, minWidth: 300});
-                // ========== LOAD MARKERS FUNCTION ==========
-                function loadMarkers(projects, group, icon) {
-                    projects.forEach(function(project) {
-                        if (project.latitude && project.longitude) {
-                            var marker = L.marker([project.latitude, project.longitude], {
-                                    icon: icon
-                                })
-                                .bindPopup(createPopupContent(project), {
-                                    maxWidth: 300,
-                                    minWidth: 300
-                                });
 
                     marker.on('popupopen', function() {
                         Fancybox.bind(this._popup._contentNode.querySelectorAll("[data-fancybox]"), {
@@ -654,47 +576,11 @@
                             },
                         });
                     });
-                            marker.on('popupopen', function() {
-                                Fancybox.bind(this._popup._contentNode.querySelectorAll(
-                                    "[data-fancybox]"), {
-                                    dragToClose: false,
-                                    closeButton: "top-right",
-                                    Image: {
-                                        zoom: false,
-                                    },
-                                    Toolbar: {
-                                        display: [{
-                                                id: "counter",
-                                                position: "center"
-                                            },
-                                            "zoom",
-                                            "slideshow",
-                                            "fullscreen",
-                                            "download",
-                                            "close",
-                                        ],
-                                    },
-                                    Carousel: {
-                                        transition: false,
-                                        friction: 0,
-                                    },
-                                    on: {
-                                        initLayout: (fancybox) => {
-                                            fancybox.$container.style.setProperty(
-                                                "--fancybox-height", "100vh");
-                                        },
-                                    },
-                                });
-                            });
 
                     group.addLayer(marker);
                 }
             });
         }
-                            group.addLayer(marker);
-                        }
-                    });
-                }
 
         // Setelah menambahkan marker ke cluster
         Fancybox.bind("[data-fancybox]", {
@@ -723,9 +609,6 @@
                 },
             },
         });
-                // ========== LOAD PROJECT MARKERS ==========
-                loadMarkers(@json($completedProjectsMap), completedGroup, completedIcon);
-                loadMarkers(@json($ongoingProjectsMap), ongoingGroup, ongoingIcon);
 
         // Define icons
         var completedIcon = L.icon({
@@ -774,42 +657,6 @@
 
             // Initial call (in case checkboxes are unchecked by default)
             setTimeout(updateProjectLayers, 500);
-                // Add groups to map
-                completedGroup.addTo(map);
-                ongoingGroup.addTo(map);
-
-                // ========== LAYER CONTROL ==========
-                var baseMaps = {
-                    "Default": osmLayer,
-                    "Satellite": satelliteLayer
-                };
-
-                var overlayMaps = {
-                    "Proyek Selesai": completedGroup,
-                    "Proyek Sedang Berlangsung": ongoingGroup
-                };
-
-                L.control.layers(baseMaps, overlayMaps).addTo(map);
-
-                // ========== CHECKBOX FILTER ==========
-                function updateProjectLayers() {
-                    var completedCheckbox = document.getElementById('completedCheckbox');
-                    var ongoingCheckbox = document.getElementById('ongoingCheckbox');
-
-                    if (completedCheckbox && ongoingCheckbox) {
-                        if (completedCheckbox.checked) {
-                            if (!map.hasLayer(completedGroup)) map.addLayer(completedGroup);
-                        } else {
-                            if (map.hasLayer(completedGroup)) map.removeLayer(completedGroup);
-                        }
-
-                        if (ongoingCheckbox.checked) {
-                            if (!map.hasLayer(ongoingGroup)) map.addLayer(ongoingGroup);
-                        } else {
-                            if (map.hasLayer(ongoingGroup)) map.removeLayer(ongoingGroup);
-                        }
-                    }
-                }
 
             // Listen to checkbox changes
             document.addEventListener('change', function(e) {
@@ -817,13 +664,6 @@
                     updateProjectLayers();
                 }
             });
-                // Listen to checkbox changes
-                document.addEventListener('change', function(e) {
-                    if (e.target && (e.target.id === 'completedCheckbox' || e.target.id ===
-                        'ongoingCheckbox')) {
-                        updateProjectLayers();
-                    }
-                });
 
         // Fit map to bounds
         var bounds = L.featureGroup([completedGroup, ongoingGroup]).getBounds();
@@ -865,68 +705,18 @@
             return div;
         };
         legend.addTo(map);
-                // Initial checkbox state
-                setTimeout(updateProjectLayers, 500);
-
-                // ========== MAP LEGEND ==========
-                var legend = L.control({
-                    position: 'bottomright'
-                });
-
-                legend.onAdd = function(map) {
-                    var div = L.DomUtil.create('div', 'info legend');
-                    div.innerHTML = `
-                    <div class="bg-white p-2 rounded-lg shadow-md">
-                        <h4 class="font-semibold mb-2">Status Proyek</h4>
-                        <div class="flex items-center mb-1">
-                            <input type="checkbox" id="completedCheckbox" class="mr-2">
-                            <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png"
-                                 alt="Completed" style="width: 12px; height: 20px;">
-                            <span class="ml-2">Proyek Selesai</span>
-                        </div>
-                        <div class="flex items-center">
-                            <input type="checkbox" id="ongoingCheckbox" checked class="mr-2">
-                            <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png"
-                                 alt="Ongoing" style="width: 12px; height: 20px;">
-                            <span class="ml-2">Proyek Sedang Berlangsung</span>
-                        </div>
-                    </div>
-                `;
-                    return div;
-                };
-
-                legend.addTo(map);
 
         var userLocationMarker;
-                // ========== FIT MAP TO BOUNDS ==========
-                var bounds = L.featureGroup([completedGroup, ongoingGroup]).getBounds();
-                if (bounds.isValid()) {
-                    map.fitBounds(bounds, {
-                        padding: [50, 50],
-                        maxZoom: 10
-                    });
-                }
-
-                // ========== USER LOCATION ==========
-                var userLocationMarker;
 
         function addUserLocation() {
             if ("geolocation" in navigator) {
                 navigator.geolocation.getCurrentPosition(function(position) {
                     var lat = position.coords.latitude;
                     var lon = position.coords.longitude;
-                function addUserLocation() {
-                    if ("geolocation" in navigator) {
-                        navigator.geolocation.getCurrentPosition(function(position) {
-                            var lat = position.coords.latitude;
-                            var lon = position.coords.longitude;
 
                     if (userLocationMarker) {
                         map.removeLayer(userLocationMarker);
                     }
-                            if (userLocationMarker) {
-                                map.removeLayer(userLocationMarker);
-                            }
 
                     var userIcon = L.divIcon({
                         html: '📍',
@@ -935,13 +725,6 @@
                         popupAnchor: [0, -40],
                         className: 'user-location-icon'
                     });
-                            var userIcon = L.divIcon({
-                                html: '📍',
-                                iconSize: [30, 30],
-                                iconAnchor: [20, 40],
-                                popupAnchor: [0, -40],
-                                className: 'user-location-icon'
-                            });
 
                     userLocationMarker = L.marker([lat, lon], {icon: userIcon}).addTo(map);
                     userLocationMarker.bindPopup("Lokasi Anda").openPopup();
@@ -954,19 +737,6 @@
                 console.error("Geolocation is not supported by this browser.");
             }
         }
-                            userLocationMarker = L.marker([lat, lon], {
-                                icon: userIcon
-                            }).addTo(map);
-
-                            userLocationMarker.bindPopup("Lokasi Anda").openPopup();
-                            map.setView([lat, lon], 10);
-                        }, function(error) {
-                            console.error("Error getting user location:", error);
-                        });
-                    } else {
-                        console.error("Geolocation is not supported by this browser.");
-                    }
-                }
 
         // Panggil fungsi untuk menambahkan lokasi pengguna
         addUserLocation();
@@ -986,35 +756,6 @@
         var operatingCount = {{ $heavyEquipments->where('status', 'beroperasi')->count() }};
         var maintenanceCount = {{ $heavyEquipments->where('status', 'maintenance')->count() }};
         var damagedCount = {{ $heavyEquipments->where('status', 'rusak')->count() }};
-                // Add location button
-                var locationButton = L.control({
-                    position: 'topleft'
-                });
-
-                locationButton.onAdd = function(map) {
-                    var div = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
-                    div.innerHTML =
-                        '<a href="#" title="Lokasi Saya" role="button" aria-label="Lokasi Saya" onclick="window.addUserLocation(); return false;"><span aria-hidden="true">📍</span></a>';
-                    return div;
-                };
-
-                locationButton.addTo(map);
-
-                // Call function to add user location on load
-                addUserLocation();
-
-                // Make addUserLocation global for onclick handler
-                window.addUserLocation = addUserLocation;
-
-                // ========== EQUIPMENT STATUS CHART ==========
-                var ctx = document.getElementById('equipmentStatusChart');
-                if (ctx) {
-                    ctx = ctx.getContext('2d');
-
-                    var readyCount = {{ $readyCount }};
-                    var operatingCount = {{ $operatingCount }};
-                    var maintenanceCount = {{ $maintenanceCount }};
-                    var damagedCount = {{ $damagedCount }};
 
         new Chart(ctx, {
             type: 'pie',
@@ -1053,39 +794,5 @@
         });
     });
     </script>
-                    new Chart(ctx, {
-                        type: 'pie',
-                        data: {
-                            labels: ['Ready', 'Beroperasi', 'Maintenance', 'Rusak'],
-                            datasets: [{
-                                data: [readyCount, operatingCount, maintenanceCount, damagedCount],
-                                backgroundColor: ['#10B981', '#2563EB', '#FFA500', '#DC2626']
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    position: 'bottom',
-                                },
-                                tooltip: {
-                                    callbacks: {
-                                        label: function(context) {
-                                            var label = context.label || '';
-                                            var value = context.parsed || 0;
-                                            var total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                            var percentage = total > 0 ? Math.round((value / total) * 100) :
-                                                0;
-                                            return `${label}: ${value} (${percentage}%)`;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    });
-                }
-            });
-        </script>
     @endpush
 </x-guest-layout>

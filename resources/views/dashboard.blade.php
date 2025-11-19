@@ -48,9 +48,17 @@
                                                 <td class="px-4 py-2">{{ $equipment->name }}</td>
                                                 <td class="px-4 py-2">
                                                     <span class="rounded-full text-md font-semibold px-2 py-1
-                                                        {{ $equipment->status == 'ready' ? 'bg-green-200 text-green-800' :
-                                                        ($equipment->status == 'beroperasi' ? 'bg-blue-200 text-blue-800' :
-                                                        '-200 text-orange-800') }}">
+                                                        {{ $equipment->status == 'ready'
+                                                            ? 'bg-green-200 text-green-800'
+                                                            : ($equipment->status == 'beroperasi'
+                                                                ? 'bg-blue-200 text-blue-800'
+                                                                : ($equipment->status == 'tidak ada'
+                                                                ? 'bg-gray-200 text-gray-800'
+                                                                : ($equipment->status == 'maintenance'
+                                                                    ? 'bg-orange-200 text-orange-800'
+                                                                    : ($equipment->status == 'rusak'
+                                                                        ? 'bg-red-200 text-red-800'
+                                                                        : '')))) }}">
                                                         {{ ucfirst($equipment->status) }}
                                                     </span>
                                                 </td>
@@ -189,6 +197,8 @@
                                         <p>Ready: {{ $heavyEquipments->where('status', 'ready')->count() }} ({{ number_format($heavyEquipments->where('status', 'ready')->count() / $heavyEquipments->count() * 100, 1) }}%)</p>
                                         <p>Beroperasi: {{ $heavyEquipments->where('status', 'beroperasi')->count() }} ({{ number_format($heavyEquipments->where('status', 'beroperasi')->count() / $heavyEquipments->count() * 100, 1) }}%)</p>
                                         <p>Maintenance: {{ $heavyEquipments->where('status', 'maintenance')->count() }} ({{ number_format($heavyEquipments->where('status', 'maintenance')->count() / $heavyEquipments->count() * 100, 1) }}%)</p>
+                                        <p>Rusak: {{ $heavyEquipments->where('status', 'rusak')->count() }} ({{ number_format($heavyEquipments->where('status', 'rusak')->count() / $heavyEquipments->count() * 100, 1) }}%)</p>
+                                        <p>Tidak ada: {{ $heavyEquipments->where('status', 'tidak ada')->count() }} ({{ number_format($heavyEquipments->where('status', 'tidak ada')->count() / $heavyEquipments->count() * 100, 1) }}%)</p>
                                     </div>
                                 </div>
                             </div>
@@ -655,14 +665,16 @@
             var readyCount = {{ $heavyEquipments->where('status', 'ready')->count() }};
             var operatingCount = {{ $heavyEquipments->where('status', 'beroperasi')->count() }};
             var maintenanceCount = {{ $heavyEquipments->where('status', 'maintenance')->count() }};
+            var rusakCount = {{ $heavyEquipments->where('status', 'rusak')->count() }};
+            var tidakAdaCount = {{ $heavyEquipments->where('status', 'tidak ada')->count() }};
 
             new Chart(ctx, {
                 type: 'pie',
                 data: {
-                    labels: ['Ready', 'Beroperasi', 'Rusak'],
+                    labels: ['Ready', 'Beroperasi', 'Maintenance','Rusak','Tidak Ada'],
                     datasets: [{
-                        data: [readyCount, operatingCount, maintenanceCount],
-                        backgroundColor: ['#10B981', '#2563EB', '#FFA500']
+                        data: [readyCount, operatingCount, maintenanceCount, rusakCount, tidakAdaCount],
+                        backgroundColor: ['#10B981', '#2563EB', '#FFA500','#EF4444','#6B7280'],
                     }]
                 },
                 options: {

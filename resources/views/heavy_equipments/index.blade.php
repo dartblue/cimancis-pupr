@@ -16,6 +16,8 @@
                             <option value="beroperasi" {{ request('status') == 'beroperasi' ? 'selected' : '' }}>Beroperasi</option>
                             <option value="ready" {{ request('status') == 'ready' ? 'selected' : '' }}>Ready</option>
                             <option value="maintenance" {{ request('status') == 'maintenance' ? 'selected' : '' }}>Maintenance</option>
+                            <option value="rusak" {{ request('status') == 'rusak' ? 'selected' : '' }}>Rusak</option>
+                            <option value="tidak ada" {{ request('status') == 'tidak ada' ? 'selected' : '' }}>Tidak Ada</option>
                         </select>
                     </div>
                     <div class="flex items-center mb-4 md:mb-0 md:mr-4">
@@ -95,7 +97,24 @@
                                         </div>
 
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm">{{ ucwords(str_replace('_', ' ', $equipment->status)) }}</td>
+                                    @php
+                                        $statusClasses = [
+                                            'ready' => 'bg-green-200 text-green-800',
+                                            'beroperasi' => 'bg-blue-200 text-blue-800',
+                                            'maintenance' => 'bg-orange-200 text-orange-800',
+                                            'rusak' => 'bg-red-200 text-red-800',
+                                            'tidak ada' => 'bg-gray-300 text-gray-800',
+                                        ];
+
+                                        $badgeClass = $statusClasses[$equipment->status] ?? 'bg-gray-200 text-gray-700';
+                                    @endphp
+
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-3 py-1 text-sm font-semibold rounded {{ $badgeClass }}">
+                                            {{ ucwords(str_replace('_', ' ', $equipment->status)) }}
+                                        </span>
+                                    </td>
+
                                     <td class="px-6 py-4 whitespace-nowrap text-sm">{{ $equipment->location }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm">{{ $equipment->hours_meter ?? '-'}}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">

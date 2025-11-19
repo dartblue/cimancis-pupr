@@ -58,6 +58,8 @@
                                     </option>
                                     <option value="rusak" {{ $heavyEquipment->status == 'rusak' ? 'selected' : '' }}>
                                         Rusak</option>
+                                    <option value="tidak ada" {{ $heavyEquipment->status == 'tidak ada' ? 'selected' : '' }}>
+                                        Tidak Ada</option>
                                 </select>
                             </div>
                             <div>
