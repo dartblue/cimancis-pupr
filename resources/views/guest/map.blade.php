@@ -262,9 +262,23 @@
 
             <div class="p-4 h-full flex flex-col">
                 <div class="flex items-center justify-between mb-2">
-                    <h3 class="font-bold text-base">Monitoring Kendaraan -
+                    <h3 class="font-bold text-base">
+                        Monitoring Kendaraan -
                         <span class="text-sm"
-                            x-text="new Date(startDate).toLocaleDateString('id-ID') + ' - ' + new Date(endDate).toLocaleDateString('id-ID')"></span>
+                            x-text="tab === 'semua'
+                                        ? (new Date(startDate).toLocaleDateString('id-ID') + ' - ' + new Date(endDate).toLocaleDateString('id-ID'))
+                                        : (
+                                            (_singleDayTrips && _singleDayTrips.length > 0)
+                                            ? (() => {
+                                                // Cari day di dayList yang tanggalnya sama dengan trip
+                                                const tripDate = _singleDayTrips[0]?.start_timestamp?.split('T')[0];
+                                                const dayObj = dayList.find(d => d.date === tripDate);
+                                                return dayObj ? dayObj.label + ' (' + new Date(dayObj.date).toLocaleDateString('id-ID') + ')' : (new Date(startDate).toLocaleDateString('id-ID') + ' - ' + new Date(endDate).toLocaleDateString('id-ID'));
+                                            })()
+                                            : (new Date(startDate).toLocaleDateString('id-ID') + ' - ' + new Date(endDate).toLocaleDateString('id-ID'))
+                                        )
+                                    ">
+                        </span>
                     </h3>
                     <button @click="detailVehicle = null; currentVehicle = null; destroyVehicleChart();"
                         class="text-gray-500 hover:text-gray-700">
@@ -603,7 +617,6 @@
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
             integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
         <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script>
             function trackingMap() {
                 return {
@@ -642,6 +655,7 @@
                     showChartFuel: true,
                     showChartBattery: true,
                     showChartPTO: true,
+                    _singleDayTrips: [],
 
                     // Tambahkan properti untuk resize
                     chartHeight: 300, // Default height 300px
@@ -710,7 +724,7 @@
                                     this.initVehicleMonitoringChart('perhari');
                                     // Otomatis pilih hari terbaru (hari ini)
                                     const today = this.dayList[this.dayList.length -
-                                    1]; // dayList urut lama ke baru
+                                        1]; // dayList urut lama ke baru
                                     if (today) this.showDetailForDay(today.date);
                                 } else {
                                     this.destroyPerhariListCharts();
@@ -1081,7 +1095,7 @@
                             // Loop untuk fetch semua page
                             do {
                                 const response = await fetch(
-                                    `https://fleetapi-id.cartrack.com/rest/vehicles/${registration}/power-takeoff?start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}&page=${currentPage}&per_page=100`, {
+                                    `https://fleetapi-id.cartrack.com/rest/vehicles/${registration}/power-takeoff?start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}&page=${currentPage}&limit=500`, {
                                         method: 'GET',
                                         headers: {
                                             'Authorization': 'Basic T1BFUjAwMDE5OmU5MTEzNzc2Y2ZjZDZhN2Q5OTAxYWI5NGU1NWRjY2MyYzU4MjU4Zjg4N2RlNTc0ZTg0MmFjZGQ4YmM2NDAwOWU=',
@@ -1392,8 +1406,8 @@
                                 <div class="project-image-container">
                                     ${project.image_url ?
                                         `<a href="${project.image_url}" data-fancybox="gallery" data-caption="${project.project_name}" class="project-image">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <img src="${project.image_url}" alt="${project.project_name}">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                </a>` :
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <img src="${project.image_url}" alt="${project.project_name}">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                </a>` :
                                         `<div class="no-image">Tidak ada gambar</div>`
                                     }
                                 </div>
