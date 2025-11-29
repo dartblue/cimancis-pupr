@@ -803,8 +803,20 @@
                     },
 
                     get summaryStats() {
-                        // Ambil data dari detailVehicle (atau dayList jika perhari)
-                        const trips = Array.isArray(this.detailVehicle) ? this.detailVehicle : [];
+                        let trips = [];
+
+                        if (this.tab === 'perhari' && Array.isArray(this._singleDayTrips) && this._singleDayTrips.length >
+                            0) {
+                            // Jika perhari dan sudah pilih hari, ambil trip hari itu saja
+                            trips = this._singleDayTrips;
+                        } else if (this.tab === 'perhari') {
+                            // Jika perhari tapi belum pilih hari, ambil semua trip dalam range
+                            trips = Array.isArray(this.detailVehicle) ? this.detailVehicle : [];
+                        } else {
+                            // Tab semua, ambil semua trip
+                            trips = Array.isArray(this.detailVehicle) ? this.detailVehicle : [];
+                        }
+
                         let berhenti = 0,
                             kilometer = 0,
                             mengemudi = 0,
@@ -812,7 +824,6 @@
                             starter = 0;
 
                         trips.forEach(trip => {
-                            // Contoh field, sesuaikan dengan struktur trip
                             if (trip.events_stop) berhenti += 1;
                             if (trip.trip_distance) kilometer += parseFloat(trip.trip_distance) || 0;
                             if (trip.events_drive) mengemudi += 1;
@@ -1377,8 +1388,8 @@
                                 <div class="project-image-container">
                                     ${project.image_url ?
                                         `<a href="${project.image_url}" data-fancybox="gallery" data-caption="${project.project_name}" class="project-image">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <img src="${project.image_url}" alt="${project.project_name}">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                </a>` :
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <img src="${project.image_url}" alt="${project.project_name}">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        </a>` :
                                         `<div class="no-image">Tidak ada gambar</div>`
                                     }
                                 </div>
