@@ -43,7 +43,7 @@ class CartrackActivityController extends Controller
         $data = CartrackVehicleActivity::where('cartrack_vehicle_id', $request->vehicleId)
             ->where('start_timestamp', '>=', $request->startDate)
             ->where('end_timestamp', '<=', $request->endDate)
-            ->orderBy('start_timestamp', 'asc')
+            ->orderBy('start_timestamp', 'desc')
             ->get();
 
         if ($data->isEmpty()) {

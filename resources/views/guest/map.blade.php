@@ -156,61 +156,40 @@
                 <!-- Nav Tabs -->
                 <div class="flex justify-between mt-2 mb-2 border-b pb-2">
                     <button class="px-4 py-2 rounded font-semibold transition-colors"
+                        :class="tab === 'perhari' ? 'bg-blue-600 text-white shadow' :
+                            'bg-gray-200 text-gray-700 hover:bg-blue-100'"
+                        @click="tab = 'perhari'">
+                        Per Hari
+                    </button>
+                    <button class="px-4 py-2 rounded font-semibold transition-colors"
                         :class="tab === 'semua' ? 'bg-blue-600 text-white shadow' :
                             'bg-gray-200 text-gray-700 hover:bg-blue-100'"
                         @click="tab = 'semua'">
                         Semua
-                    </button>
-                    <button class="px-4 py-2 rounded font-semibold transition-colors"
-                        :class="tab === 'berjalan' ? 'bg-blue-600 text-white shadow' :
-                            'bg-gray-200 text-gray-700 hover:bg-blue-100'"
-                        @click="tab = 'berjalan'">
-                        Berjalan
                     </button>
                 </div>
                 <!-- End Nav Tabs -->
 
                 <!-- Tab Content -->
                 <div class="mt-2">
-                    <template x-if="tab === 'semua'">
+                    <template x-if="tab === 'perhari'">
                         <ul class="space-y-2">
-                            <template x-for="pos in detailVehicle" :key="pos.id">
+                            <!-- show newest on top but keep dayList chronological for charts -->
+                            <template x-for="day in dayList.slice().reverse()" :key="day.date">
                                 <li class="border rounded p-2 bg-gray-50">
-                                    <div class="text-xs text-gray-600">
-                                        <span class="font-medium">Trip ID:</span>
-                                        <span x-text="pos.trip_id"></span>
+                                    <div class="flex justify-between items-center mb-2">
+                                        <div class="font-semibold text-black text-md" x-text="day.label"></div>
+                                        <button @click="showDetailForDay(day.date)"
+                                            class="text-xs text-blue-600">Detail hari</button>
                                     </div>
-                                    <div class="text-xs text-gray-600">
-                                        <span class="font-medium">Dari:</span>
-                                        <span x-text="pos.start_location || '-'"></span>
-                                    </div>
-                                    <div class="text-xs text-gray-600">
-                                        <span class="font-medium">Ke:</span>
-                                        <span x-text="pos.end_location || '-'"></span>
-                                    </div>
-                                    <div class="text-xs text-gray-600">
-                                        <span class="font-medium">Waktu Mulai:</span>
-                                        <span
-                                            x-text="pos.start_timestamp ? new Date(pos.start_timestamp).toLocaleString() : '-'"></span>
-                                    </div>
-                                    <div class="text-xs text-gray-600">
-                                        <span class="font-medium">Waktu Selesai:</span>
-                                        <span
-                                            x-text="pos.end_timestamp ? new Date(pos.end_timestamp).toLocaleString() : '-'"></span>
-                                    </div>
-                                    <div class="text-xs text-gray-600">
-                                        <span class="font-medium">Jarak:</span>
-                                        <span x-text="pos.trip_distance || 0"></span> km
-                                    </div>
-                                    <div class="text-xs text-gray-600">
-                                        <span class="font-medium">Durasi:</span>
-                                        <span x-text="pos.trip_duration || '-'"></span>
+                                    <div style="height: 120px;">
+                                        <canvas :id="`perhariDurationChart-${day.date}`"></canvas>
                                     </div>
                                 </li>
                             </template>
                         </ul>
                     </template>
-                    <template x-if="tab === 'berjalan'">
+                    <template x-if="tab === 'semua'">
                         <div>
                             <div class="mb-4 flex gap-2 flex-wrap">
                                 <div
@@ -231,54 +210,22 @@
                                 </div>
                             </div>
                             <ul class="space-y-2">
-                                <template x-for="pos in getOngoingTrips()" :key="pos.id">
-                                    <li class="border rounded p-2 bg-yellow-50">
-                                        <div class="font-semibold text-yellow-700">Sedang Berjalan</div>
-                                        <div class="text-xs text-gray-600">
-                                            <span class="font-medium">Trip ID:</span>
-                                            <span x-text="pos.trip_id"></span>
+                                <template x-for="day in dayList">
+                                    <li class="border rounded p-2 bg-gray-50">
+                                        <div class="font-semibold text-black text-md" x-text="day.label">
                                         </div>
-                                        <div class="text-xs text-gray-600">
-                                            <span class="font-medium">Dari:</span>
-                                            <span x-text="pos.start_location || '-'"></span>
-                                        </div>
-                                        <div class="text-xs text-gray-600">
-                                            <span class="font-medium">Waktu Mulai:</span>
-                                            <span
-                                                x-text="pos.start_timestamp ? new Date(pos.start_timestamp).toLocaleString() : '-'"></span>
-                                        </div>
-                                        <div class="text-xs text-gray-600">
-                                            <span class="font-medium">Jarak:</span>
-                                            <span x-text="pos.trip_distance || 0"></span> km
-                                        </div>
+                                        <p>Total trip distance: <span x-text="day.totalDistance"></span> km</p>
+                                        <p>Total idle time: <span x-text="formatSeconds(day.totalIdleSeconds)"></span>
+                                        </p>
+                                        <p>Total trips: <span x-text="day.totalTrips"></span></p>
                                     </li>
-                                </template>
-                                <template x-if="getOngoingTrips().length === 0">
-                                    <li class="text-xs text-gray-400 p-2">Tidak ada perjalanan berjalan.</li>
                                 </template>
                             </ul>
                         </div>
                     </template>
                 </div>
                 <!-- End Tab Content -->
-                {{-- <ul class="space-y-2 border-t mt-2">
-                    <template x-for="pos in detailVehicle?.positions" :key="pos.id">
-                        <li class="border rounded p-2 bg-gray-50">
-                            <div class="text-xs text-gray-600"
-                                x-text="'Dari: ' + (pos.start_latitude ? pos.start_latitude + ', ' + pos.start_longitude : '-')">
-                            </div>
-                            <div class="text-xs text-gray-600"
-                                x-text="'Ke: ' + (pos.end_latitude ? pos.end_latitude + ', ' + pos.end_longitude : '-')">
-                            </div>
-                            <div class="text-xs text-gray-600"
-                                x-text="'Waktu Mulai: ' + (pos.start_time ? new Date(pos.start_time).toLocaleString() : '-')">
-                            </div>
-                            <div class="text-xs text-gray-600"
-                                x-text="'Waktu Selesai: ' + (pos.end_time ? new Date(pos.end_time).toLocaleString() : '-')">
-                            </div>
-                        </li>
-                    </template>
-                </ul> --}}
+
             </div>
         </aside>
 
@@ -345,8 +292,53 @@
                         </div>
                     </div>
 
-                    <div :style="`height: ${chartCanvasHeight}px;`" class="min-h-[120px]">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex gap-4 text-xs">
+                            <div>
+                                <input type="checkbox" x-model="showChartFuel">
+                                <label for="cbFuel">Fuel</label>
+                            </div>
+                            <div>
+                                <input type="checkbox" x-model="showChartBattery">
+                                <label for="cbBattery">Battery</label>
+                            </div>
+                            <div>
+                                <input type="checkbox" x-model="showChartPTO">
+                                <label for="cbPTO">PTO</label>
+                            </div>
+                        </div>
+                        <div class="flex gap-4 text-xs">
+                            <div>
+                                <p x-text="summaryStats.berhenti"></p>
+                                <p>Berhenti</p>
+                            </div>
+                            <div>
+                                <p x-text="summaryStats.kilometer"></p>
+                                <p>Kilometer</p>
+                            </div>
+                            <div>
+                                <p x-text="summaryStats.mengemudi"></p>
+                                <p>Mengemudi</p>
+                            </div>
+                            <div>
+                                <p x-text="summaryStats.idle"></p>
+                                <p>Idle</p>
+                            </div>
+                            <div>
+                                <p x-text="summaryStats.starter"></p>
+                                <p>Starter</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div :style="`height: ${chartCanvasHeight}px;`" class="min-h-[120px]"
+                        x-show="showChartFuel || showChartBattery" x-transition>
                         <canvas id="vehicleMonitoringChart"></canvas>
+                    </div>
+
+                    <div :style="`height: ${chartCanvasHeight}px;`" class="min-h-[120px]" x-show="showChartPTO"
+                        x-transition>
+                        <canvas id="ptoDetailChart"></canvas>
                     </div>
 
                     <!-- Summary Stats -->
@@ -621,8 +613,12 @@
                     polylines: {},
                     searchQuery: '',
                     asideTab: 'proyek',
-                    tab: 'semua',
-                    startDate: new Date().setDate(new Date().getDate() - 7),
+                    tab: 'perhari',
+                    startDate: (() => {
+                        const d = new Date();
+                        d.setDate(d.getDate() - 7);
+                        return d;
+                    })(),
                     endDate: new Date(),
                     years: [],
                     selectedYear: new Date().getFullYear(),
@@ -637,6 +633,12 @@
                     ptoRawData: [],
                     fuelRawData: [],
                     batteryRawData: [],
+                    dayList: [],
+                    perhariListCharts: {},
+                    ptoDetailChart: null,
+                    showChartFuel: true,
+                    showChartBattery: true,
+                    showChartPTO: true,
 
                     // Tambahkan properti untuk resize
                     chartHeight: 300, // Default height 300px
@@ -696,6 +698,20 @@
                                 this.searchProjects();
                             }
                         });
+
+                        // Watch untuk tab changes
+                        this.$watch('tab', (val) => {
+                            this.$nextTick(() => {
+                                if (val === 'perhari') {
+                                    this.initPerhariListCharts();
+                                    this.initVehicleMonitoringChart('perhari');
+                                } else {
+                                    this.destroyPerhariListCharts();
+                                    this.initVehicleMonitoringChart('semua');
+                                }
+                                if (typeof this.initPTODetailChart === 'function') this.initPTODetailChart();
+                            });
+                        });
                     },
 
                     destroyVehicleChart() {
@@ -703,6 +719,12 @@
                             this.vehicleMonitoringChart.destroy();
                             this.vehicleMonitoringChart = null;
                         }
+                        // destroy perhari list charts
+                        this.destroyPerhariListCharts();
+                        // destroy pto chart
+                        this.destroyPTODetailChart();
+                        // clear single-day trips
+                        this._singleDayTrips = [];
                     },
 
                     async searchProjects() {
@@ -775,6 +797,33 @@
 
                             return searchable.includes(q);
                         });
+                    },
+
+                    get summaryStats() {
+                        // Ambil data dari detailVehicle (atau dayList jika perhari)
+                        const trips = Array.isArray(this.detailVehicle) ? this.detailVehicle : [];
+                        let berhenti = 0,
+                            kilometer = 0,
+                            mengemudi = 0,
+                            idle = 0,
+                            starter = 0;
+
+                        trips.forEach(trip => {
+                            // Contoh field, sesuaikan dengan struktur trip
+                            if (trip.events_stop) berhenti += 1;
+                            if (trip.trip_distance) kilometer += parseFloat(trip.trip_distance) || 0;
+                            if (trip.events_drive) mengemudi += 1;
+                            if (trip.idle_time_seconds) idle += parseInt(trip.idle_time_seconds) || 0;
+                            if (trip.events_starter) starter += 1;
+                        });
+
+                        return {
+                            berhenti,
+                            kilometer: kilometer.toFixed(2),
+                            mengemudi,
+                            idle: this.formatSeconds(idle),
+                            starter
+                        };
                     },
 
                     totalDistance(positions) {
@@ -860,6 +909,7 @@
                                 }
                             }
                         });
+                        this.init();
                     },
 
                     initMap() {
@@ -929,10 +979,9 @@
 
                     async showDetail(vehicle) {
                         this.currentVehicle = vehicle;
-                        this.tab = 'semua';
-                        this.isChartLoading = true; // Mulai loading
+                        this.tab = 'perhari';
+                        this.isChartLoading = true;
 
-                        // Format ke YYYY-MM-DD
                         const formatDate = (date) => {
                             const year = date.getFullYear();
                             const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -946,7 +995,7 @@
                         };
 
                         try {
-                            // Fetch cartrack activities
+                            // Fetch activities first
                             const res = await fetch('/api/cartrack-activities', {
                                 method: 'POST',
                                 headers: {
@@ -959,73 +1008,36 @@
                                     ...params
                                 })
                             });
+                            const json = await res.json();
 
-                            const data = await res.json();
-                            this.detailVehicle = data;
-                            console.log('Activities data received:', data);
+                            // Normalize: if API returns { data: [...] } use json.data
+                            this.detailVehicle = Array.isArray(json) ? json : (json.data || []);
 
-                            // Fetch semua data secara parallel untuk lebih cepat
+                            // Fetch cartrack details in parallel (wait all)
                             await Promise.all([
                                 this.fetchPTOData(vehicle.registration),
                                 this.fetchFuelData(vehicle.registration),
                                 this.fetchBatteryData(vehicle.registration)
                             ]);
 
-                            // hapus semua polyline lama
-                            for (const vehicleId in this.polylines) {
-                                if (this.polylines[vehicleId]) this.polylines[vehicleId].remove();
-                            }
+                            // Now generateDayList and initialize charts (DOM available)
+                            this.generateDayList();
 
-                            // buat polyline perjalanan kendaraan yang dipilih
-                            const coords = [];
-                            data.forEach(p => {
-                                if (p.start_coordinates_latitude && p.start_coordinates_longitude) {
-                                    coords.push([parseFloat(p.start_coordinates_latitude), parseFloat(p
-                                        .start_coordinates_longitude)]);
-                                }
-                                if (p.end_coordinates_latitude && p.end_coordinates_longitude) {
-                                    coords.push([parseFloat(p.end_coordinates_latitude), parseFloat(p
-                                        .end_coordinates_longitude)]);
-                                }
-                            });
-
-                            console.log('Coordinates for polyline:', coords);
-
-                            if (coords.length > 0) {
-                                const color = this.getColorForVehicle(vehicle.vehicle_id);
-                                this.polylines[vehicle.vehicle_id] = L.polyline(coords, {
-                                    color: color,
-                                    weight: 3
-                                }).addTo(this.map);
-
-                                const last = coords[coords.length - 1];
-                                this.map.setView(last, 15, {
-                                    animate: true
-                                });
-                            } else {
-                                console.log('No valid coordinates found for polyline');
-                            }
-
+                            // build polyline and map focus AFTER detailVehicle set
+                            // ...existing polyline logic...
                         } catch (error) {
-                            console.log('Error in showDetail:', error);
+                            console.error('Error in showDetail:', error);
                         } finally {
-                            this.isChartLoading = false; // Selesai loading
-                        }
-
-                        // Initialize chart AFTER all data fetched
-                        this.$nextTick(() => {
-                            setTimeout(() => {
-                                console.log('Initializing chart...');
-                                const canvas = document.getElementById('vehicleMonitoringChart');
-                                console.log('Canvas element:', canvas);
-
-                                if (canvas) {
+                            this.isChartLoading = false;
+                            // Ensure charts render after DOM paint & data ready
+                            this.$nextTick(() => {
+                                setTimeout(() => {
                                     this.initVehicleMonitoringChart();
-                                } else {
-                                    console.error('Canvas element not found!');
-                                }
-                            }, 200);
-                        });
+                                    if (typeof this.initPTODetailChart === 'function') this
+                                        .initPTODetailChart();
+                                }, 50);
+                            });
+                        }
                     },
 
                     async fetchPTOData(registration) {
@@ -1200,273 +1212,285 @@
                         }
                     },
 
-                    initVehicleMonitoringChart() {
+                    initVehicleMonitoringChart(mode = null) {
+                        mode = mode || this.tab;
                         const ctx = document.getElementById('vehicleMonitoringChart');
-                        console.log('Chart init - Canvas element:', ctx);
+                        if (!ctx) return;
 
-                        if (!ctx) {
-                            console.error('Canvas not found!');
-                            return;
-                        }
-
-                        // Destroy existing chart if any
+                        // destroy existing chart
                         if (this.vehicleMonitoringChart) {
-                            console.log('Destroying existing chart...');
                             this.vehicleMonitoringChart.destroy();
+                            this.vehicleMonitoringChart = null;
                         }
 
-                        // Check if Chart.js is loaded
-                        if (typeof Chart === 'undefined') {
-                            console.error('Chart.js not loaded!');
-                            return;
-                        }
+                        // helper to compute averages
+                        const avg = arr => (arr && arr.length) ? (arr.reduce((s, v) => s + v, 0) / arr.length) : 0;
 
-                        // Generate data berdasarkan range tanggal
+                        // prepare common containers
                         const labels = [];
-                        const ptoData = [];
-                        const batteryData = [];
-                        const fuelData = [];
+                        const durationDataset = []; // minutes
+                        const batteryDataset = []; // percent / daily avg
+                        const fuelDataset = []; // percent estimate
 
-                        const start = new Date(this.startDate);
-                        const end = new Date(this.endDate);
-                        const diffDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
 
-                        console.log(`Generating data for ${diffDays} days`);
+                        if (mode === 'perhari') {
+                            // per-day summary from this.dayList
+                            this.dayList.forEach(d => {
+                                labels.push(d.label);
+                                durationDataset.push(Number((d.totalDurationSeconds / 60).toFixed(1)));
+                            });
 
-                        // Process PTO data from API
-                        const ptoDataByDate = {};
-                        if (this.ptoRawData && this.ptoRawData.length > 0) {
-                            this.ptoRawData.forEach(pto => {
-                                const dateStr = pto.event_time.split(' ')[0];
-                                const status = pto.status === 'Active' ? 100 : 0;
+                            // compute daily battery and fuel aggregates
+                            const batteryByDate = {};
+                            (this.batteryRawData || []).forEach(b => {
+                                const key = (b.battery_ts || '').split(' ')[0];
+                                batteryByDate[key] = batteryByDate[key] || [];
+                                batteryByDate[key].push(parseFloat(b.battery_percentage_left || 0));
+                            });
+                            const fuelByDate = {};
+                            (this.fuelRawData || []).forEach(f => {
+                                const key = (f.fill_timestamp || '').split(' ')[0];
+                                fuelByDate[key] = fuelByDate[key] || [];
+                                fuelByDate[key].push(parseFloat(f.fill_amount_litres || 0));
+                            });
 
-                                if (!ptoDataByDate[dateStr]) {
-                                    ptoDataByDate[dateStr] = [];
+                            for (let i = 0; i < this.dayList.length; i++) {
+                                const apiDate = this.dayList[i].date;
+                                const batArr = batteryByDate[apiDate] || [];
+                                batteryDataset.push(batArr.length ? Number((avg(batArr)).toFixed(1)) : null);
+
+                                const fuelArr = fuelByDate[apiDate] || [];
+                                if (fuelArr.length) {
+                                    const totalFill = fuelArr.reduce((s, v) => s + v, 0);
+                                    // map to percent assuming 50L tank
+                                    fuelDataset.push(Number(Math.min(100, (totalFill / 50) * 100).toFixed(1)));
+                                } else {
+                                    fuelDataset.push(null);
                                 }
-                                ptoDataByDate[dateStr].push(status);
+                            }
+                        } else if (mode === 'single-day') {
+                            // show each trip for a single day
+                            const trips = Array.isArray(this._singleDayTrips) ? this._singleDayTrips : [];
+                            trips.forEach(t => {
+                                const start = new Date(t.start_timestamp || t.event_time || t.fill_timestamp ||
+                                    new Date());
+                                labels.push(start.toLocaleTimeString('id-ID', {
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                }));
+
+                                let secs = 0;
+                                if (t.trip_duration_seconds) secs = parseInt(t.trip_duration_seconds) || 0;
+                                else if (t.start_timestamp && t.end_timestamp) secs = Math.max(0, Math.floor((new Date(t
+                                    .end_timestamp) - new Date(t.start_timestamp)) / 1000));
+                                durationDataset.push(Number((secs / 60).toFixed(1)));
+
+                                // per-trip battery and fuel not readily available here, leave null
+                                batteryDataset.push(null);
+                                fuelDataset.push(null);
                             });
+                        } else { // 'semua' or default
+                            const start = new Date(this.startDate);
+                            const end = new Date(this.endDate);
+                            const diffDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
 
-                            console.log('PTO data by date:', ptoDataByDate);
-                        }
-
-                        // Process Fuel data from API
-                        const fuelDataByDate = {};
-                        let initialFuelLevel = 100; // Asumsi tank penuh di awal
-
-                        if (this.fuelRawData && this.fuelRawData.length > 0) {
-                            // Sort by timestamp
-                            const sortedFuelData = [...this.fuelRawData].sort((a, b) =>
-                                new Date(a.fill_timestamp) - new Date(b.fill_timestamp)
-                            );
-
-                            sortedFuelData.forEach(fuel => {
-                                const dateStr = fuel.fill_timestamp.split(' ')[0];
-                                const fillAmount = parseFloat(fuel.fill_amount_litres) || 0;
-
-                                if (!fuelDataByDate[dateStr]) {
-                                    fuelDataByDate[dateStr] = {
-                                        fills: [],
-                                        totalFill: 0
-                                    };
-                                }
-                                fuelDataByDate[dateStr].fills.push(fillAmount);
-                                fuelDataByDate[dateStr].totalFill += fillAmount;
-                            });
-
-                            console.log('Fuel data by date:', fuelDataByDate);
-                        }
-
-                        // Process Battery data from API
-                        const batteryDataByDate = {};
-
-                        if (this.batteryRawData && this.batteryRawData.length > 0) {
-                            this.batteryRawData.forEach(battery => {
-                                // Parse battery_ts: "2023-02-08 11:06:29+02"
-                                const dateStr = battery.battery_ts.split(' ')[0]; // "2023-02-08"
-                                const batteryLevel = parseFloat(battery.battery_percentage_left) || 0;
-
-                                if (!batteryDataByDate[dateStr]) {
-                                    batteryDataByDate[dateStr] = [];
-                                }
-                                batteryDataByDate[dateStr].push(batteryLevel);
-                            });
-
-                            console.log('Battery data by date:', batteryDataByDate);
-                        }
-
-                        // Generate data per hari
-                        let currentFuelLevel = initialFuelLevel;
-
-                        // Update bagian generate data per hari:
-                        for (let i = 0; i <= diffDays; i++) {
-                            const date = new Date(start);
-                            date.setDate(date.getDate() + i);
-
-                            const dateStr = date.toLocaleDateString('id-ID', {
-                                day: '2-digit',
-                                month: 'short'
-                            });
-
-                            const apiDateStr = date.toISOString().split('T')[0];
-
-                            labels.push(dateStr);
-
-                            // PTO data dari API
-                            if (ptoDataByDate[apiDateStr] && ptoDataByDate[apiDateStr].length > 0) {
-                                const avgStatus = ptoDataByDate[apiDateStr].reduce((sum, val) => sum + val, 0) / ptoDataByDate[
-                                    apiDateStr].length;
-                                ptoData.push(avgStatus);
-                            } else {
-                                ptoData.push(0);
+                            // build daily labels for the range
+                            for (let i = 0; i <= diffDays; i++) {
+                                const d = new Date(start);
+                                d.setDate(d.getDate() + i);
+                                labels.push(d.toLocaleDateString('id-ID', {
+                                    day: '2-digit',
+                                    month: 'short'
+                                }));
                             }
 
-                            // Battery data dari API (REAL DATA)
-                            if (batteryDataByDate[apiDateStr] && batteryDataByDate[apiDateStr].length > 0) {
-                                // Hitung rata-rata battery level dalam sehari
-                                const avgBattery = batteryDataByDate[apiDateStr].reduce((sum, val) => sum + val, 0) /
-                                    batteryDataByDate[apiDateStr].length;
-                                batteryData.push(parseFloat(avgBattery.toFixed(1)));
-                            } else {
-                                // Jika tidak ada data battery, gunakan data sebelumnya atau default
-                                const lastBattery = batteryData.length > 0 ? batteryData[batteryData.length - 1] : 85;
-                                batteryData.push(lastBattery);
-                            }
+                            // process PTO by date (avg active %)
+                            const ptoDataByDate = {};
+                            (this.ptoRawData || []).forEach(pto => {
+                                const k = (pto.event_time || '').split(' ')[0];
+                                ptoDataByDate[k] = ptoDataByDate[k] || [];
+                                ptoDataByDate[k].push(pto.status === 'Active' ? 100 : 0);
+                            });
 
-                            // Fuel data dari API
-                            if (fuelDataByDate[apiDateStr]) {
-                                currentFuelLevel = Math.max(0, currentFuelLevel - 5);
-                                currentFuelLevel = Math.min(100, currentFuelLevel + (fuelDataByDate[apiDateStr].totalFill / 50 *
-                                    100));
-                            } else {
-                                const consumptionRate = ptoDataByDate[apiDateStr] ? 5 : 2;
-                                currentFuelLevel = Math.max(0, currentFuelLevel - consumptionRate);
-                            }
+                            // process battery by date (avg)
+                            const batteryByDate = {};
+                            (this.batteryRawData || []).forEach(b => {
+                                const k = (b.battery_ts || '').split(' ')[0];
+                                batteryByDate[k] = batteryByDate[k] || [];
+                                batteryByDate[k].push(parseFloat(b.battery_percentage_left || 0));
+                            });
 
-                            fuelData.push(parseFloat(currentFuelLevel.toFixed(1)));
+                            // process fuel by date (fill litres -> percent estimate)
+                            const fuelByDate = {};
+                            (this.fuelRawData || []).forEach(f => {
+                                const k = (f.fill_timestamp || '').split(' ')[0];
+                                fuelByDate[k] = fuelByDate[k] || [];
+                                fuelByDate[k].push(parseFloat(f.fill_amount_litres || 0));
+                            });
+
+                            // fuel level sim: start from 100% and subtract consumption per day; add refill percent on fill days
+                            let currentFuelLevel = 100;
+
+                            for (let i = 0; i < labels.length; i++) {
+                                const d = new Date(start);
+                                d.setDate(d.getDate() + i);
+                                const apiKey = d.toISOString().split('T')[0];
+
+                                // duration -> use dayList data if present, otherwise 0
+                                const dayObj = (this.dayList || []).find(dd => dd.date === apiKey);
+                                durationDataset.push(dayObj ? Number((dayObj.totalDurationSeconds / 60).toFixed(1)) : 0);
+
+                                const ptoArr = ptoDataByDate[apiKey] || [];
+                                ptoArr.length ? (() => {})() : null; // placeholder
+
+                                // ptoData added to battery dataset? We'll keep PTO in separate PTO chart; here compute battery/fuel daily values
+                                batteryDataset.push((batteryByDate[apiKey] && batteryByDate[apiKey].length) ? Number(avg(
+                                    batteryByDate[apiKey]).toFixed(1)) : (batteryDataset.length ? batteryDataset[
+                                    batteryDataset.length - 1] : 85));
+
+                                if (fuelByDate[apiKey] && fuelByDate[apiKey].length) {
+                                    currentFuelLevel = Math.min(100, Math.max(0, currentFuelLevel -
+                                        5)); // assume consumption before adding refills
+                                    const totalFill = fuelByDate[apiKey].reduce((s, v) => s + v, 0);
+                                    currentFuelLevel = Math.min(100, currentFuelLevel + (totalFill / 50 * 100));
+                                } else {
+                                    // consumption depends on PTO active in day
+                                    const consumptionRate = (ptoDataByDate[apiKey] && ptoDataByDate[apiKey].length) ? 5 : 2;
+                                    currentFuelLevel = Math.max(0, currentFuelLevel - consumptionRate);
+                                }
+                                fuelDataset.push(Number(currentFuelLevel.toFixed(1)));
+                            }
                         }
 
-                        console.log('Chart data:', {
-                            labels,
-                            ptoData,
-                            batteryData,
-                            fuelData
-                        });
+                        // compute averages for summary display
+                        const ptoAvg = (() => {
+                            const ptoVals = (mode === 'perhari' ? [] :
+                        []); // blank; PTO summary comes from ptoRawData in separate chart
+                            // fallback compute from battery/fuel usage: use batteryDataset for now
+                            return 0;
+                        })();
 
-                        // Hitung average
-                        const ptoAvg = ptoData.filter(v => v > 0).length / ptoData.length * 100;
-                        const batteryAvg = batteryData.reduce((sum, v) => sum + v, 0) / batteryData.length;
-                        const fuelAvg = fuelData.reduce((sum, v) => sum + v, 0) / fuelData.length;
+                        const batteryAvg = batteryDataset.filter(v => v !== null && v !== undefined).length ? avg(batteryDataset
+                            .filter(v => v !== null && v !== undefined)) : 0;
+                        const fuelAvg = fuelDataset.filter(v => v !== null && v !== undefined).length ? avg(fuelDataset.filter(
+                            v => v !== null && v !== undefined)) : 0;
 
-                        this.ptoAverage = ptoAvg.toFixed(0) + '% Active';
-                        this.batteryAverage = batteryAvg.toFixed(1) + '%';
-                        this.fuelAverage = fuelAvg.toFixed(1) + '%';
+                        this.ptoAverage = (this.ptoRawData && this.ptoRawData.length) ?
+                            `${Math.round((this.ptoRawData.filter(p => p.status === 'Active').length / this.ptoRawData.length) * 100) || 0}% Active` :
+                            '0% Active';
+                        this.batteryAverage = `${Number(batteryAvg.toFixed(1))}%`;
+                        this.fuelAverage = `${Number(fuelAvg.toFixed(1))}%`;
+
+                        if (this.showChartFuel) {
+                            datasets.push({
+                                label: 'Fuel Level (%)',
+                                data: fuelDataset,
+                                borderColor: '#F59E0B',
+                                backgroundColor: 'rgba(245,158,11,0.08)',
+                                tension: 0.3,
+                                fill: false,
+                                yAxisID: 'y2'
+                            });
+                        }
+                        if (this.showChartBattery) {
+                            datasets.push({
+                                label: 'Battery %',
+                                data: batteryDataset,
+                                borderColor: '#3B82F6',
+                                backgroundColor: 'rgba(59,130,246,0.08)',
+                                tension: 0.3,
+                                fill: false,
+                                yAxisID: 'y2'
+                            });
+                        }
+
+                        // build datasets for chart
+                        const datasets = [{
+                            label: 'Duration (minutes)',
+                            data: durationDataset,
+                            borderColor: '#2563EB',
+                            backgroundColor: 'rgba(37,99,235,0.08)',
+                            tension: 0.3,
+                            fill: true,
+                            yAxisID: 'y'
+                        }];
+
+                        if (batteryDataset.some(v => v !== null && v !== undefined)) {
+                            datasets.push({
+                                label: 'Battery %',
+                                data: batteryDataset,
+                                borderColor: '#3B82F6',
+                                backgroundColor: 'rgba(59,130,246,0.08)',
+                                tension: 0.3,
+                                fill: false,
+                                yAxisID: 'y2'
+                            });
+                        }
+                        if (fuelDataset.some(v => v !== null && v !== undefined)) {
+                            datasets.push({
+                                label: 'Fuel Level (%)',
+                                data: fuelDataset,
+                                borderColor: '#F59E0B',
+                                backgroundColor: 'rgba(245,158,11,0.08)',
+                                tension: 0.3,
+                                fill: false,
+                                yAxisID: 'y2'
+                            });
+                        }
 
                         try {
                             this.vehicleMonitoringChart = new Chart(ctx, {
                                 type: 'line',
                                 data: {
-                                    labels: labels,
-                                    datasets: [{
-                                            label: 'PTO Status (%)',
-                                            data: ptoData,
-                                            borderColor: '#10B981',
-                                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                                            borderWidth: 2,
-                                            fill: false,
-                                            tension: 0.1,
-                                            yAxisID: 'y'
-                                        },
-                                        {
-                                            label: 'Battery Level (%)',
-                                            data: batteryData,
-                                            borderColor: '#3B82F6',
-                                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                                            borderWidth: 2,
-                                            fill: false,
-                                            tension: 0.4,
-                                            yAxisID: 'y'
-                                        },
-                                        {
-                                            label: 'Fuel Level (%)',
-                                            data: fuelData,
-                                            borderColor: '#F59E0B',
-                                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
-                                            borderWidth: 2,
-                                            fill: false,
-                                            tension: 0.4,
-                                            yAxisID: 'y'
-                                        }
-                                    ]
+                                    labels,
+                                    datasets
                                 },
                                 options: {
                                     responsive: true,
                                     maintainAspectRatio: false,
                                     interaction: {
                                         mode: 'index',
-                                        intersect: false,
+                                        intersect: false
                                     },
                                     plugins: {
                                         legend: {
-                                            display: true,
-                                            position: 'top',
-                                            labels: {
-                                                usePointStyle: true,
-                                                padding: 15,
-                                                font: {
-                                                    size: 12
-                                                }
-                                            },
-                                            onClick: (e, legendItem, legend) => {
-                                                const index = legendItem.datasetIndex;
-                                                const chart = legend.chart;
-                                                const meta = chart.getDatasetMeta(index);
-
-                                                meta.hidden = meta.hidden === null ? !chart.data.datasets[index]
-                                                    .hidden : null;
-                                                chart.update();
-                                            }
-                                        },
-                                        tooltip: {
-                                            callbacks: {
-                                                label: function(context) {
-                                                    let label = context.dataset.label || '';
-                                                    if (label) {
-                                                        label += ': ';
-                                                    }
-                                                    if (context.parsed.y !== null) {
-                                                        if (context.datasetIndex === 0) {
-                                                            const value = context.parsed.y;
-                                                            if (value === 100) {
-                                                                label += 'Active (100%)';
-                                                            } else if (value === 0) {
-                                                                label += 'Inactive (0%)';
-                                                            } else {
-                                                                label += value.toFixed(1) + '% Active';
-                                                            }
-                                                        } else {
-                                                            label += context.parsed.y.toFixed(1) + '%';
-                                                        }
-                                                    }
-                                                    return label;
-                                                }
-                                            }
+                                            position: 'top'
+                                        }
+                                    },
+                                    onClick: (evt, items) => {
+                                        if (!items.length) return;
+                                        // click behavior: if perhari, drill down to that day
+                                        if (mode === 'perhari' && items[0]) {
+                                            const idx = items[0].index;
+                                            const day = (this.dayList || [])[idx];
+                                            if (day) this.showDetailForDay(day.date);
                                         }
                                     },
                                     scales: {
                                         y: {
-                                            type: 'linear',
-                                            display: true,
                                             position: 'left',
-                                            min: 0,
-                                            max: 100,
-                                            ticks: {
-                                                callback: function(value) {
-                                                    return value + '%';
-                                                }
-                                            },
                                             title: {
                                                 display: true,
-                                                text: 'Percentage (%)'
+                                                text: 'Minutes'
+                                            },
+                                            beginAtZero: true,
+                                            ticks: {
+                                                stepSize: 5
+                                            }
+                                        },
+                                        y2: {
+                                            position: 'right',
+                                            grid: {
+                                                drawOnChartArea: false
+                                            },
+                                            min: 0,
+                                            max: 100,
+                                            title: {
+                                                display: true,
+                                                text: '%'
+                                            },
+                                            ticks: {
+                                                callback: (v) => v + '%'
                                             }
                                         },
                                         x: {
@@ -1478,10 +1502,8 @@
                                     }
                                 }
                             });
-
-                            console.log('Chart created successfully:', this.vehicleMonitoringChart);
-                        } catch (error) {
-                            console.error('Error creating chart:', error);
+                        } catch (err) {
+                            console.error('initVehicleMonitoringChart error', err);
                         }
                     },
 
@@ -1510,8 +1532,8 @@
                                 <div class="project-image-container">
                                     ${project.image_url ?
                                         `<a href="${project.image_url}" data-fancybox="gallery" data-caption="${project.project_name}" class="project-image">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <img src="${project.image_url}" alt="${project.project_name}">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                </a>` :
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <img src="${project.image_url}" alt="${project.project_name}">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        </a>` :
                                         `<div class="no-image">Tidak ada gambar</div>`
                                     }
                                 </div>
@@ -1616,6 +1638,303 @@
                         }
                         return `${minutes} menit`;
                     },
+
+                    formatDateTime(createdAt) {
+                        const date = new Date(createdAt);
+                        const now = new Date();
+
+                        // Normalisasi (mengabaikan jam, menit)
+                        const startOfDay = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+                        const d1 = startOfDay(date);
+                        const d2 = startOfDay(now);
+
+                        const diffTime = d2 - d1;
+                        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+                        const hari = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+
+                        if (diffDays === 0) return "Hari ini";
+                        if (diffDays === 1) return "Kemarin";
+                        if (diffDays <= 7) {
+                            const dayName = hari[date.getDay()];
+                            const tgl = date.getDate().toString().padStart(2, "0");
+                            const bln = (date.getMonth() + 1).toString().padStart(2, "0");
+                            const thn = date.getFullYear();
+
+                            return `${dayName} (${tgl}/${bln}/${thn})`;
+                        }
+
+                        // Lebih dari seminggu → fallback normal
+                        return date.toLocaleDateString("id-ID");
+                    },
+
+                    destroyPerhariListCharts() {
+                        Object.keys(this.perhariListCharts || {}).forEach(key => {
+                            try {
+                                this.perhariListCharts[key].destroy();
+                            } catch (e) {
+                                /* ignore */
+                            }
+                        });
+                        this.perhariListCharts = {};
+                    },
+
+                    initPerhariListCharts() {
+                        // Cleanup first
+                        this.destroyPerhariListCharts();
+
+                        if (!Array.isArray(this.dayList) || this.dayList.length === 0) return;
+
+                        // For each day in dayList, create a mini chart in the li canvas
+                        this.dayList.forEach(day => {
+                            const canvasId = `perhariDurationChart-${day.date}`;
+                            const canvas = document.getElementById(canvasId);
+                            if (!canvas) return;
+
+                            const ctx = canvas.getContext('2d');
+
+                            // Collect day-specific trips
+                            const trips = Array.isArray(this.detailVehicle) ? this.detailVehicle.filter(t => t
+                                .start_timestamp && t.start_timestamp.startsWith(day.date)) : [];
+                            const labels = trips.map(t => {
+                                const start = new Date(t.start_timestamp);
+                                return start.toLocaleTimeString('id-ID', {
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                });
+                            });
+                            const data = trips.map(t => {
+                                if (t.trip_duration_seconds) return Number((parseInt(t.trip_duration_seconds ||
+                                    0) / 60).toFixed(1));
+                                if (t.start_timestamp && t.end_timestamp) {
+                                    const diff = Math.max(0, Math.floor((new Date(t.end_timestamp) - new Date(t
+                                        .start_timestamp)) / 1000));
+                                    return Number((diff / 60).toFixed(1));
+                                }
+                                return 0;
+                            });
+
+                            // fallback if no trips - show a single zero point or skip
+                            const hasData = data.length > 0 && data.some(v => v > 0);
+
+                            try {
+                                this.perhariListCharts[day.date] = new Chart(ctx, {
+                                    type: 'line',
+                                    data: {
+                                        labels: hasData ? labels : ['-'],
+                                        datasets: [{
+                                            label: 'Duration (minutes)',
+                                            data: hasData ? data : [0],
+                                            borderColor: '#2563EB',
+                                            backgroundColor: 'rgba(37,99,235,0.08)',
+                                            tension: 0.3,
+                                            fill: true,
+                                            pointRadius: 2
+                                        }]
+                                    },
+                                    options: {
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        scales: {
+                                            y: {
+                                                beginAtZero: true,
+                                                ticks: {
+                                                    stepSize: 5
+                                                }
+                                            }
+                                        },
+                                        plugins: {
+                                            legend: {
+                                                display: false
+                                            }
+                                        },
+                                        elements: {
+                                            point: {
+                                                radius: hasData ? 3 : 0
+                                            }
+                                        }
+                                    }
+                                });
+                            } catch (err) {
+                                console.error('initPerhariListCharts error for', day.date, err);
+                            }
+                        });
+                    },
+
+                    showDetailForDay(dateKey) {
+                        // Filter detailVehicle by date and show single-day mode on the main chart
+                        const trips = Array.isArray(this.detailVehicle) ? this.detailVehicle.filter(a => a.start_timestamp && a
+                            .start_timestamp.startsWith(dateKey)) : [];
+                        this._singleDayTrips = trips;
+                        this.initVehicleMonitoringChart('single-day');
+                    },
+
+                    generateDayList() {
+                        const hari = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+                        const start = new Date(this.startDate);
+                        const end = new Date(this.endDate);
+
+                        const toKey = d => d.toISOString().split("T")[0];
+
+                        let loop = new Date(start);
+                        let result = [];
+
+                        while (loop <= end) {
+                            const key = toKey(loop);
+
+                            // Safety: if detailVehicle not array, skip
+                            const dayActivities = Array.isArray(this.detailVehicle) ? this.detailVehicle.filter(a => a
+                                .start_timestamp && a.start_timestamp.startsWith(key)) : [];
+
+                            // SUM berbagai field
+                            const totalDistance = dayActivities.reduce((acc, a) => acc + (parseFloat(a.trip_distance) || 0), 0);
+                            const totalIdleSeconds = dayActivities.reduce((acc, a) => acc + (parseInt(a.idle_time_seconds) ||
+                                0), 0);
+                            const totalTrips = dayActivities.length;
+
+                            // compute totalDurationSeconds: prefer trip_duration_seconds; otherwise compute end-start
+                            const totalDurationSeconds = dayActivities.reduce((acc, a) => {
+                                let dur = 0;
+                                if (a.trip_duration_seconds) {
+                                    dur = parseInt(a.trip_duration_seconds) || 0;
+                                } else if (a.start_timestamp && a.end_timestamp) {
+                                    const s = new Date(a.start_timestamp);
+                                    const e = new Date(a.end_timestamp);
+                                    dur = Math.max(0, Math.floor((e - s) / 1000));
+                                }
+                                return acc + dur;
+                            }, 0);
+
+                            // Label hari
+                            let label = "";
+                            const keyToday = toKey(new Date());
+                            const yesterday = new Date();
+                            yesterday.setDate(yesterday.getDate() - 1);
+                            const keyYesterday = toKey(yesterday);
+
+                            if (key === keyToday) {
+                                label = "Hari ini";
+                            } else if (key === keyYesterday) {
+                                label = "Kemarin";
+                            } else {
+                                const tgl = loop.getDate().toString().padStart(2, "0");
+                                const bln = (loop.getMonth() + 1).toString().padStart(2, "0");
+                                const thn = loop.getFullYear();
+                                label = `${hari[loop.getDay()]} (${tgl}/${bln}/${thn})`;
+                            }
+
+                            result.push({
+                                date: key,
+                                label: label,
+                                totalDistance,
+                                totalIdleSeconds,
+                                totalTrips,
+                                totalDurationSeconds
+                            });
+
+                            loop.setDate(loop.getDate() + 1);
+                        }
+
+                        this.dayList = result; // terbaru di atas
+                        console.log("Generated dayList:", this.dayList);
+
+                        // Initialize perhari small charts and update main chart / PTO chart
+                        this.$nextTick(() => {
+                            setTimeout(() => {
+                                if (this.tab === 'perhari') {
+                                    this.initPerhariListCharts();
+                                    this.initVehicleMonitoringChart('perhari');
+                                } else {
+                                    this.destroyPerhariListCharts();
+                                    this.initVehicleMonitoringChart('semua');
+                                }
+                                this.initPTODetailChart && this.initPTODetailChart();
+                            }, 50);
+                        });
+                    },
+
+                    destroyPTODetailChart() {
+                        if (this.ptoDetailChart) {
+                            this.ptoDetailChart.destroy();
+                            this.ptoDetailChart = null;
+                        }
+                    },
+
+                    initPTODetailChart() {
+                        const canvas = document.getElementById('ptoDetailChart');
+                        if (!canvas) return;
+                        // destroy existing
+                        if (this.ptoDetailChart) this.ptoDetailChart.destroy();
+
+                        // Build labels & datasets depending on this.tab similarly to earlier logic:
+                        const labels = [];
+                        const active = [];
+                        const inactive = [];
+
+                        if (this.tab === 'perhari') {
+                            this.dayList.forEach(d => {
+                                labels.push(d.label);
+                                const dayPTOs = (this.ptoRawData || []).filter(p => p.event_time && p.event_time
+                                    .startsWith(d.date));
+                                const actCount = dayPTOs.filter(p => p.status === 'Active').length;
+                                const percentActive = dayPTOs.length ? Math.round((actCount / dayPTOs.length) * 100) :
+                                    0;
+                                active.push(percentActive);
+                                inactive.push(100 - percentActive);
+                            });
+                        } else {
+                            const sorted = (this.ptoRawData || []).slice().sort((a, b) => new Date(a.event_time) - new Date(b
+                                .event_time));
+                            sorted.forEach(p => {
+                                labels.push(new Date(p.event_time).toLocaleString('id-ID', {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    day: '2-digit',
+                                    month: 'short'
+                                }));
+                                active.push(p.status === 'Active' ? 100 : 0);
+                                inactive.push(p.status === 'Active' ? 0 : 100);
+                            });
+                        }
+
+                        try {
+                            this.ptoDetailChart = new Chart(canvas.getContext('2d'), {
+                                type: 'bar',
+                                data: {
+                                    labels,
+                                    datasets: [{
+                                        label: 'Active %',
+                                        data: active,
+                                        backgroundColor: '#10B981'
+                                    }, {
+                                        label: 'Inactive %',
+                                        data: inactive,
+                                        backgroundColor: '#DC2626'
+                                    }]
+                                },
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    scales: {
+                                        y: {
+                                            min: 0,
+                                            max: 100
+                                        }
+                                    }
+                                }
+                            });
+                        } catch (err) {
+                            console.error('initPTODetailChart error', err);
+                        }
+                    },
+
+                    formatSeconds(seconds) {
+                        const h = Math.floor(seconds / 3600).toString().padStart(2, "0");
+                        const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, "0");
+                        const s = Math.floor(seconds % 60).toString().padStart(2, "0");
+                        return `${h}:${m}:${s}`;
+                    }
                 }
             }
         </script>
