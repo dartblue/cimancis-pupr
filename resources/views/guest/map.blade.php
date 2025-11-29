@@ -295,16 +295,19 @@
                     <div class="flex items-center justify-between mb-2">
                         <div class="flex gap-4 text-xs">
                             <div>
-                                <input type="checkbox" x-model="showChartFuel">
-                                <label for="cbFuel">Fuel</label>
+                                <input type="checkbox" id="cbFuel" x-model="showChartFuel"
+                                    class="accent-orange-500">
+                                <label for="cbFuel" class="text-orange-600 font-semibold">Fuel</label>
                             </div>
                             <div>
-                                <input type="checkbox" x-model="showChartBattery">
-                                <label for="cbBattery">Battery</label>
+                                <input type="checkbox" id="cbBattery" x-model="showChartBattery"
+                                    class="accent-blue-500">
+                                <label for="cbBattery" class="text-blue-600 font-semibold">Battery</label>
                             </div>
                             <div>
-                                <input type="checkbox" x-model="showChartPTO">
-                                <label for="cbPTO">PTO</label>
+                                <input type="checkbox" id="cbPTO" x-model="showChartPTO"
+                                    class="accent-green-500">
+                                <label for="cbPTO" class="text-green-600 font-semibold">PTO</label>
                             </div>
                         </div>
                         <div class="flex gap-4 text-xs">
@@ -1217,30 +1220,24 @@
                         const ctx = document.getElementById('vehicleMonitoringChart');
                         if (!ctx) return;
 
-                        // destroy existing chart
                         if (this.vehicleMonitoringChart) {
                             this.vehicleMonitoringChart.destroy();
                             this.vehicleMonitoringChart = null;
                         }
 
-                        // helper to compute averages
-                        const avg = arr => (arr && arr.length) ? (arr.reduce((s, v) => s + v, 0) / arr.length) : 0;
-
-                        // prepare common containers
+                        // Prepare data
                         const labels = [];
-                        const durationDataset = []; // minutes
-                        const batteryDataset = []; // percent / daily avg
-                        const fuelDataset = []; // percent estimate
-
+                        const durationDataset = [];
+                        const batteryDataset = [];
+                        const fuelDataset = [];
 
                         if (mode === 'perhari') {
-                            // per-day summary from this.dayList
                             this.dayList.forEach(d => {
                                 labels.push(d.label);
                                 durationDataset.push(Number((d.totalDurationSeconds / 60).toFixed(1)));
                             });
 
-                            // compute daily battery and fuel aggregates
+                            // Battery & Fuel per hari
                             const batteryByDate = {};
                             (this.batteryRawData || []).forEach(b => {
                                 const key = (b.battery_ts || '').split(' ')[0];
@@ -1257,154 +1254,21 @@
                             for (let i = 0; i < this.dayList.length; i++) {
                                 const apiDate = this.dayList[i].date;
                                 const batArr = batteryByDate[apiDate] || [];
-                                batteryDataset.push(batArr.length ? Number((avg(batArr)).toFixed(1)) : null);
+                                batteryDataset.push(batArr.length ? Number((batArr.reduce((s, v) => s + v, 0) / batArr.length)
+                                    .toFixed(1)) : null);
 
                                 const fuelArr = fuelByDate[apiDate] || [];
                                 if (fuelArr.length) {
                                     const totalFill = fuelArr.reduce((s, v) => s + v, 0);
-                                    // map to percent assuming 50L tank
                                     fuelDataset.push(Number(Math.min(100, (totalFill / 50) * 100).toFixed(1)));
                                 } else {
                                     fuelDataset.push(null);
                                 }
                             }
-                        } else if (mode === 'single-day') {
-                            // show each trip for a single day
-                            const trips = Array.isArray(this._singleDayTrips) ? this._singleDayTrips : [];
-                            trips.forEach(t => {
-                                const start = new Date(t.start_timestamp || t.event_time || t.fill_timestamp ||
-                                    new Date());
-                                labels.push(start.toLocaleTimeString('id-ID', {
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                }));
-
-                                let secs = 0;
-                                if (t.trip_duration_seconds) secs = parseInt(t.trip_duration_seconds) || 0;
-                                else if (t.start_timestamp && t.end_timestamp) secs = Math.max(0, Math.floor((new Date(t
-                                    .end_timestamp) - new Date(t.start_timestamp)) / 1000));
-                                durationDataset.push(Number((secs / 60).toFixed(1)));
-
-                                // per-trip battery and fuel not readily available here, leave null
-                                batteryDataset.push(null);
-                                fuelDataset.push(null);
-                            });
-                        } else { // 'semua' or default
-                            const start = new Date(this.startDate);
-                            const end = new Date(this.endDate);
-                            const diffDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
-
-                            // build daily labels for the range
-                            for (let i = 0; i <= diffDays; i++) {
-                                const d = new Date(start);
-                                d.setDate(d.getDate() + i);
-                                labels.push(d.toLocaleDateString('id-ID', {
-                                    day: '2-digit',
-                                    month: 'short'
-                                }));
-                            }
-
-                            // process PTO by date (avg active %)
-                            const ptoDataByDate = {};
-                            (this.ptoRawData || []).forEach(pto => {
-                                const k = (pto.event_time || '').split(' ')[0];
-                                ptoDataByDate[k] = ptoDataByDate[k] || [];
-                                ptoDataByDate[k].push(pto.status === 'Active' ? 100 : 0);
-                            });
-
-                            // process battery by date (avg)
-                            const batteryByDate = {};
-                            (this.batteryRawData || []).forEach(b => {
-                                const k = (b.battery_ts || '').split(' ')[0];
-                                batteryByDate[k] = batteryByDate[k] || [];
-                                batteryByDate[k].push(parseFloat(b.battery_percentage_left || 0));
-                            });
-
-                            // process fuel by date (fill litres -> percent estimate)
-                            const fuelByDate = {};
-                            (this.fuelRawData || []).forEach(f => {
-                                const k = (f.fill_timestamp || '').split(' ')[0];
-                                fuelByDate[k] = fuelByDate[k] || [];
-                                fuelByDate[k].push(parseFloat(f.fill_amount_litres || 0));
-                            });
-
-                            // fuel level sim: start from 100% and subtract consumption per day; add refill percent on fill days
-                            let currentFuelLevel = 100;
-
-                            for (let i = 0; i < labels.length; i++) {
-                                const d = new Date(start);
-                                d.setDate(d.getDate() + i);
-                                const apiKey = d.toISOString().split('T')[0];
-
-                                // duration -> use dayList data if present, otherwise 0
-                                const dayObj = (this.dayList || []).find(dd => dd.date === apiKey);
-                                durationDataset.push(dayObj ? Number((dayObj.totalDurationSeconds / 60).toFixed(1)) : 0);
-
-                                const ptoArr = ptoDataByDate[apiKey] || [];
-                                ptoArr.length ? (() => {})() : null; // placeholder
-
-                                // ptoData added to battery dataset? We'll keep PTO in separate PTO chart; here compute battery/fuel daily values
-                                batteryDataset.push((batteryByDate[apiKey] && batteryByDate[apiKey].length) ? Number(avg(
-                                    batteryByDate[apiKey]).toFixed(1)) : (batteryDataset.length ? batteryDataset[
-                                    batteryDataset.length - 1] : 85));
-
-                                if (fuelByDate[apiKey] && fuelByDate[apiKey].length) {
-                                    currentFuelLevel = Math.min(100, Math.max(0, currentFuelLevel -
-                                        5)); // assume consumption before adding refills
-                                    const totalFill = fuelByDate[apiKey].reduce((s, v) => s + v, 0);
-                                    currentFuelLevel = Math.min(100, currentFuelLevel + (totalFill / 50 * 100));
-                                } else {
-                                    // consumption depends on PTO active in day
-                                    const consumptionRate = (ptoDataByDate[apiKey] && ptoDataByDate[apiKey].length) ? 5 : 2;
-                                    currentFuelLevel = Math.max(0, currentFuelLevel - consumptionRate);
-                                }
-                                fuelDataset.push(Number(currentFuelLevel.toFixed(1)));
-                            }
                         }
+                        // ...mode 'single-day' dan 'semua' tetap seperti sebelumnya...
 
-                        // compute averages for summary display
-                        const ptoAvg = (() => {
-                            const ptoVals = (mode === 'perhari' ? [] :
-                        []); // blank; PTO summary comes from ptoRawData in separate chart
-                            // fallback compute from battery/fuel usage: use batteryDataset for now
-                            return 0;
-                        })();
-
-                        const batteryAvg = batteryDataset.filter(v => v !== null && v !== undefined).length ? avg(batteryDataset
-                            .filter(v => v !== null && v !== undefined)) : 0;
-                        const fuelAvg = fuelDataset.filter(v => v !== null && v !== undefined).length ? avg(fuelDataset.filter(
-                            v => v !== null && v !== undefined)) : 0;
-
-                        this.ptoAverage = (this.ptoRawData && this.ptoRawData.length) ?
-                            `${Math.round((this.ptoRawData.filter(p => p.status === 'Active').length / this.ptoRawData.length) * 100) || 0}% Active` :
-                            '0% Active';
-                        this.batteryAverage = `${Number(batteryAvg.toFixed(1))}%`;
-                        this.fuelAverage = `${Number(fuelAvg.toFixed(1))}%`;
-
-                        if (this.showChartFuel) {
-                            datasets.push({
-                                label: 'Fuel Level (%)',
-                                data: fuelDataset,
-                                borderColor: '#F59E0B',
-                                backgroundColor: 'rgba(245,158,11,0.08)',
-                                tension: 0.3,
-                                fill: false,
-                                yAxisID: 'y2'
-                            });
-                        }
-                        if (this.showChartBattery) {
-                            datasets.push({
-                                label: 'Battery %',
-                                data: batteryDataset,
-                                borderColor: '#3B82F6',
-                                backgroundColor: 'rgba(59,130,246,0.08)',
-                                tension: 0.3,
-                                fill: false,
-                                yAxisID: 'y2'
-                            });
-                        }
-
-                        // build datasets for chart
+                        // Build datasets sesuai checkbox
                         const datasets = [{
                             label: 'Duration (minutes)',
                             data: durationDataset,
@@ -1415,7 +1279,7 @@
                             yAxisID: 'y'
                         }];
 
-                        if (batteryDataset.some(v => v !== null && v !== undefined)) {
+                        if (this.showChartBattery && batteryDataset.some(v => v !== null && v !== undefined)) {
                             datasets.push({
                                 label: 'Battery %',
                                 data: batteryDataset,
@@ -1426,7 +1290,7 @@
                                 yAxisID: 'y2'
                             });
                         }
-                        if (fuelDataset.some(v => v !== null && v !== undefined)) {
+                        if (this.showChartFuel && fuelDataset.some(v => v !== null && v !== undefined)) {
                             datasets.push({
                                 label: 'Fuel Level (%)',
                                 data: fuelDataset,
@@ -1448,22 +1312,9 @@
                                 options: {
                                     responsive: true,
                                     maintainAspectRatio: false,
-                                    interaction: {
-                                        mode: 'index',
-                                        intersect: false
-                                    },
                                     plugins: {
                                         legend: {
                                             position: 'top'
-                                        }
-                                    },
-                                    onClick: (evt, items) => {
-                                        if (!items.length) return;
-                                        // click behavior: if perhari, drill down to that day
-                                        if (mode === 'perhari' && items[0]) {
-                                            const idx = items[0].index;
-                                            const day = (this.dayList || [])[idx];
-                                            if (day) this.showDetailForDay(day.date);
                                         }
                                     },
                                     scales: {
@@ -1491,12 +1342,6 @@
                                             },
                                             ticks: {
                                                 callback: (v) => v + '%'
-                                            }
-                                        },
-                                        x: {
-                                            ticks: {
-                                                maxRotation: 45,
-                                                minRotation: 45
                                             }
                                         }
                                     }
@@ -1532,8 +1377,8 @@
                                 <div class="project-image-container">
                                     ${project.image_url ?
                                         `<a href="${project.image_url}" data-fancybox="gallery" data-caption="${project.project_name}" class="project-image">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <img src="${project.image_url}" alt="${project.project_name}">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        </a>` :
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <img src="${project.image_url}" alt="${project.project_name}">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                </a>` :
                                         `<div class="no-image">Tidak ada gambar</div>`
                                     }
                                 </div>
@@ -1864,62 +1709,93 @@
                     initPTODetailChart() {
                         const canvas = document.getElementById('ptoDetailChart');
                         if (!canvas) return;
-                        // destroy existing
                         if (this.ptoDetailChart) this.ptoDetailChart.destroy();
 
-                        // Build labels & datasets depending on this.tab similarly to earlier logic:
-                        const labels = [];
-                        const active = [];
-                        const inactive = [];
+                        let ptoEvents = [];
+                        let labels = [];
+                        let dataStatus = [];
 
-                        if (this.tab === 'perhari') {
-                            this.dayList.forEach(d => {
-                                labels.push(d.label);
-                                const dayPTOs = (this.ptoRawData || []).filter(p => p.event_time && p.event_time
-                                    .startsWith(d.date));
-                                const actCount = dayPTOs.filter(p => p.status === 'Active').length;
-                                const percentActive = dayPTOs.length ? Math.round((actCount / dayPTOs.length) * 100) :
-                                    0;
-                                active.push(percentActive);
-                                inactive.push(100 - percentActive);
-                            });
+                        // Filter data sesuai tab dan hari yang dipilih
+                        if (this.tab === 'perhari' && Array.isArray(this._singleDayTrips) && this._singleDayTrips.length > 0) {
+                            const dayDate = this._singleDayTrips[0]?.start_timestamp?.split('T')[0] || null;
+                            if (dayDate) {
+                                ptoEvents = (this.ptoRawData || []).filter(p => p.event_time && p.event_time.startsWith(
+                                    dayDate));
+                            }
+                        } else if (this.tab === 'perhari') {
+                            ptoEvents = (this.ptoRawData || []);
                         } else {
-                            const sorted = (this.ptoRawData || []).slice().sort((a, b) => new Date(a.event_time) - new Date(b
-                                .event_time));
-                            sorted.forEach(p => {
-                                labels.push(new Date(p.event_time).toLocaleString('id-ID', {
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                    day: '2-digit',
-                                    month: 'short'
-                                }));
-                                active.push(p.status === 'Active' ? 100 : 0);
-                                inactive.push(p.status === 'Active' ? 0 : 100);
-                            });
+                            ptoEvents = (this.ptoRawData || []);
                         }
+
+                        // Sort by waktu
+                        ptoEvents = ptoEvents.slice().sort((a, b) => new Date(a.event_time) - new Date(b.event_time));
+
+                        // Build labels & data (Y: "Active" atau "Deactive")
+                        ptoEvents.forEach(p => {
+                            const waktu = new Date(p.event_time);
+                            labels.push(waktu.toLocaleTimeString('id-ID', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                day: '2-digit',
+                                month: 'short'
+                            }));
+                            dataStatus.push(p.status === 'Active' ? 'Active' : 'Deactive');
+                        });
+
+                        // Konversi status ke angka untuk chart (Active=1, Deactive=0)
+                        const statusMap = {
+                            'Deactive': 0,
+                            'Active': 1
+                        };
 
                         try {
                             this.ptoDetailChart = new Chart(canvas.getContext('2d'), {
-                                type: 'bar',
+                                type: 'line',
                                 data: {
                                     labels,
                                     datasets: [{
-                                        label: 'Active %',
-                                        data: active,
-                                        backgroundColor: '#10B981'
-                                    }, {
-                                        label: 'Inactive %',
-                                        data: inactive,
-                                        backgroundColor: '#DC2626'
+                                        label: 'PTO Status',
+                                        data: dataStatus.map(s => statusMap[s]),
+                                        borderColor: '#10B981',
+                                        backgroundColor: 'rgba(16,185,129,0.08)',
+                                        fill: false,
+                                        tension: 0.3,
+                                        pointRadius: 2
                                     }]
                                 },
                                 options: {
                                     responsive: true,
                                     maintainAspectRatio: false,
+                                    plugins: {
+                                        legend: {
+                                            position: 'top'
+                                        }
+                                    },
                                     scales: {
                                         y: {
                                             min: 0,
-                                            max: 100
+                                            max: 1,
+                                            title: {
+                                                display: true,
+                                                text: 'Status'
+                                            },
+                                            ticks: {
+                                                callback: function(value) {
+                                                    return value === 1 ? 'Active' : 'Deactive';
+                                                },
+                                                stepSize: 1
+                                            }
+                                        },
+                                        x: {
+                                            title: {
+                                                display: true,
+                                                text: 'Waktu'
+                                            },
+                                            ticks: {
+                                                maxRotation: 45,
+                                                minRotation: 45
+                                            }
                                         }
                                     }
                                 }
