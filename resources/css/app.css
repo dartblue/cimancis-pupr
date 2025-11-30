@@ -1,7 +1,8 @@
+@import "flatpickr/dist/flatpickr.min.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-@import "flatpickr/dist/flatpickr.min.css";
 
 .select2-dropdown {
     @apply absolute block w-auto box-border bg-white border-solid border-2 border-gray-600 z-50 float-left;

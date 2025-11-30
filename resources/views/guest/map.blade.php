@@ -382,7 +382,6 @@
     @push('styles')
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
             integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
         <style>
             .custom-div-icon {
                 background: transparent;
@@ -616,7 +615,6 @@
     @push('scripts')
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
             integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-        <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
         <script>
             function trackingMap() {
                 return {
@@ -717,21 +715,19 @@
                         });
 
                         // Watch untuk tab changes
-                        this.$watch('tab', (val) => {
-                            this.$nextTick(() => {
-                                if (val === 'perhari') {
-                                    this.initPerhariListCharts();
-                                    this.initVehicleMonitoringChart('perhari');
-                                    // Otomatis pilih hari terbaru (hari ini)
-                                    const today = this.dayList[this.dayList.length -
-                                        1]; // dayList urut lama ke baru
-                                    if (today) this.showDetailForDay(today.date);
-                                } else {
-                                    this.destroyPerhariListCharts();
-                                    this.initVehicleMonitoringChart('semua');
+                        this.$nextTick(() => {
+                            setTimeout(() => {
+                                this.destroyVehicleChart();
+                                const canvas = document.getElementById('vehicleMonitoringChart');
+                                if (canvas) {
+                                    this.initVehicleMonitoringChart();
                                 }
-                                if (typeof this.initPTODetailChart === 'function') this.initPTODetailChart();
-                            });
+                                const ptoCanvas = document.getElementById('ptoDetailChart');
+                                if (ptoCanvas) {
+                                    this.initPTODetailChart();
+                                }
+                                this.initPerhariListCharts();
+                            }, 50);
                         });
                     },
 
@@ -1010,6 +1006,8 @@
                     },
 
                     async showDetail(vehicle) {
+                        this.destroyVehicleChart();
+
                         this.currentVehicle = vehicle;
                         this.tab = 'perhari';
                         this.isChartLoading = true;
@@ -1042,6 +1040,15 @@
                             });
                             const json = await res.json();
 
+                            // === HANDLE ERROR RESPONSE ===
+                            if (json && json.message === "No activities found.") {
+                                this.detailVehicle = [];
+                                console.warn("No activities found for this vehicle.");
+                            } else {
+                                // Normalize: if API returns { data: [...] } use json.data
+                                this.detailVehicle = Array.isArray(json) ? json : (json.data || []);
+                            }
+
                             // Normalize: if API returns { data: [...] } use json.data
                             this.detailVehicle = Array.isArray(json) ? json : (json.data || []);
 
@@ -1061,12 +1068,18 @@
                             console.error('Error in showDetail:', error);
                         } finally {
                             this.isChartLoading = false;
-                            // Ensure charts render after DOM paint & data ready
                             this.$nextTick(() => {
                                 setTimeout(() => {
-                                    this.initVehicleMonitoringChart();
-                                    if (typeof this.initPTODetailChart === 'function') this
-                                        .initPTODetailChart();
+                                    this.destroyVehicleChart();
+                                    this.initPerhariListCharts();
+                                    const canvas = document.getElementById('vehicleMonitoringChart');
+                                    if (canvas) {
+                                        this.initVehicleMonitoringChart();
+                                    }
+                                    const ptoCanvas = document.getElementById('ptoDetailChart');
+                                    if (ptoCanvas) {
+                                        this.initPTODetailChart();
+                                    }
                                 }, 50);
                             });
                         }
@@ -1297,6 +1310,11 @@
                         }
                         // ...mode 'single-day' dan 'semua' tetap seperti sebelumnya...
 
+                        if (!labels.length) {
+                            labels.push('Tidak ada data');
+                            durationDataset.push(0);
+                        }
+
                         // Build datasets sesuai checkbox
                         const datasets = [{
                             label: 'Duration (minutes)',
@@ -1406,8 +1424,8 @@
                                 <div class="project-image-container">
                                     ${project.image_url ?
                                         `<a href="${project.image_url}" data-fancybox="gallery" data-caption="${project.project_name}" class="project-image">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <img src="${project.image_url}" alt="${project.project_name}">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                </a>` :
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <img src="${project.image_url}" alt="${project.project_name}">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        </a>` :
                                         `<div class="no-image">Tidak ada gambar</div>`
                                     }
                                 </div>
@@ -1589,6 +1607,12 @@
                                 return 0;
                             });
 
+                            // === Tambahkan pengecekan data kosong ===
+                            if (!labels.length) {
+                                labels.push('Tidak ada data');
+                                data.push(0);
+                            }
+
                             // fallback if no trips - show a single zero point or skip
                             const hasData = data.length > 0 && data.some(v => v > 0);
 
@@ -1716,14 +1740,16 @@
                         // Initialize perhari small charts and update main chart / PTO chart
                         this.$nextTick(() => {
                             setTimeout(() => {
-                                if (this.tab === 'perhari') {
-                                    this.initPerhariListCharts();
-                                    this.initVehicleMonitoringChart('perhari');
-                                } else {
-                                    this.destroyPerhariListCharts();
-                                    this.initVehicleMonitoringChart('semua');
+                                this.destroyVehicleChart();
+                                this.initPerhariListCharts();
+                                const canvas = document.getElementById('vehicleMonitoringChart');
+                                if (canvas) {
+                                    this.initVehicleMonitoringChart();
                                 }
-                                this.initPTODetailChart && this.initPTODetailChart();
+                                const ptoCanvas = document.getElementById('ptoDetailChart');
+                                if (ptoCanvas) {
+                                    this.initPTODetailChart();
+                                }
                             }, 50);
                         });
                     },
@@ -1755,6 +1781,12 @@
                             ptoEvents = (this.ptoRawData || []);
                         } else {
                             ptoEvents = (this.ptoRawData || []);
+                        }
+
+                        // === Tambahkan pengecekan data kosong ===
+                        if (!labels.length) {
+                            labels.push('Tidak ada data');
+                            dataStatus.push(0);
                         }
 
                         // Sort by waktu
