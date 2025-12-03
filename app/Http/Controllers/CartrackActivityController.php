@@ -47,7 +47,7 @@ class CartrackActivityController extends Controller
             ->get();
 
         if ($data->isEmpty()) {
-            return response()->json(['message' => 'No activities found.'], 404);
+            return response()->json(['message' => 'No activities found.'], 200);
         }
 
         return response()->json($data);
