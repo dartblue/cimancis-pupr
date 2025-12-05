@@ -357,6 +357,9 @@
                     <div :style="`height: ${chartCanvasHeight}px;`" class="min-h-[120px]">
                         <canvas id="ptoDetailChart"></canvas>
                     </div>
+                    <div :style="`height: ${chartCanvasHeight}px;`" class="min-h-[120px]">
+                        <canvas id="socEventChart"></canvas>
+                    </div>
 
                     <!-- Summary Stats -->
                     <div class="grid grid-cols-3 gap-2 mt-2">
@@ -654,6 +657,9 @@
                     showChartFuel: true,
                     showChartBattery: true,
                     showChartPTO: true,
+                    socRawData: [], // Array untuk menyimpan data SOC hasil fetch
+                    socEventChart: null, // Chart.js instance untuk chart SOC
+                    showChartSOC: true,
                     _singleDayTrips: [],
 
                     // Tambahkan properti untuk resize
@@ -803,6 +809,11 @@
                         if (this.ptoDetailChart) {
                             this.ptoDetailChart.destroy();
                             this.ptoDetailChart = null;
+                        }
+
+                        if (this.socEventChart) {
+                            this.socEventChart.destroy();
+                            this.socEventChart = null;
                         }
 
                         // destroy perhari list charts
@@ -1129,7 +1140,8 @@
                             await Promise.all([
                                 this.fetchFuelData(vehicle.registration),
                                 this.fetchPTOData(vehicle.registration),
-                                this.fetchBatteryData(vehicle.registration)
+                                this.fetchBatteryData(vehicle.registration),
+                                this.fetchSOCData(vehicle.registration)
                             ]);
 
                             // Now generateDayList and initialize charts (DOM available)
@@ -1156,6 +1168,8 @@
                                     if (fuelCanvas) {
                                         this.initFuelEventChart();
                                     }
+                                    const socCanvas = document.getElementById('socEventChart');
+                                    if (socCanvas) this.initSOCEventChart();
 
                                     this.drawVehiclePolyline(this.detailVehicle);
                                 }, 50);
@@ -1362,6 +1376,74 @@
                         }
                     },
 
+                    async fetchSOCData(registration) {
+                        try {
+                            const formatDate = (date) => {
+                                const year = date.getFullYear();
+                                const month = String(date.getMonth() + 1).padStart(2, '0');
+                                const day = String(date.getDate()).padStart(2, '0');
+                                return `${year}-${month}-${day}`;
+                            };
+
+                            let allSOCData = [];
+                            let loopDate = new Date(this.startDate);
+                            const endDate = new Date(this.endDate);
+
+                            while (loopDate <= endDate) {
+                                const dateStr = formatDate(loopDate);
+                                const startTimestamp = `${dateStr} 00:00:00`;
+                                const endTimestamp = `${dateStr} 23:59:59`;
+
+                                let currentPage = 1;
+                                let lastPage = 1;
+
+                                do {
+                                    const response = await fetch(
+                                        `https://fleetapi-id.cartrack.com/rest/vehicles/${registration}/soc?start_timestamp=${encodeURIComponent(startTimestamp)}&end_timestamp=${encodeURIComponent(endTimestamp)}&page=${currentPage}&limit=100`, {
+                                            method: 'GET',
+                                            headers: {
+                                                'Authorization': 'Basic T1BFUjAwMDE5OmU5MTEzNzc2Y2ZjZDZhN2Q5OTAxYWI5NGU1NWRjY2MyYzU4MjU4Zjg4N2RlNTc0ZTg0MmFjZGQ4YmM2NDAwOWU=',
+                                                'Content-Type': 'application/json',
+                                            }
+                                        }
+                                    );
+
+                                    if (!response.ok) {
+                                        console.error(`SOC API error! status: ${response.status}`);
+                                        break;
+                                    }
+
+                                    const socData = await response.json();
+
+                                    if (socData.data && socData.data.length > 0) {
+                                        allSOCData = allSOCData.concat(socData.data);
+                                    }
+
+                                    if (socData.meta && socData.meta.last_page) {
+                                        lastPage = socData.meta.last_page;
+                                    }
+
+                                    currentPage++;
+                                } while (currentPage <= lastPage);
+
+                                // Next day
+                                loopDate.setDate(loopDate.getDate() + 1);
+                            }
+
+                            // Simpan data SOC untuk digunakan di chart
+                            this.socRawData = allSOCData;
+
+                            return {
+                                data: allSOCData,
+                                total: allSOCData.length
+                            };
+                        } catch (error) {
+                            console.error('Error fetching SOC data:', error);
+                            this.socRawData = [];
+                            return null;
+                        }
+                    },
+
                     formatLatLon(v) {
                         if (!v.latest_activity) return "";
 
@@ -1387,8 +1469,8 @@
                                 <div class="project-image-container">
                                     ${project.image_url ?
                                         `<a href="${project.image_url}" data-fancybox="gallery" data-caption="${project.project_name}" class="project-image">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <img src="${project.image_url}" alt="${project.project_name}">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                </a>` :
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <img src="${project.image_url}" alt="${project.project_name}">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        </a>` :
                                         `<div class="no-image">Tidak ada gambar</div>`
                                     }
                                 </div>
@@ -1628,6 +1710,24 @@
                         const trips = Array.isArray(this.detailVehicle) ? this.detailVehicle.filter(a => a.start_timestamp && a
                             .start_timestamp.startsWith(dateKey)) : [];
                         this._singleDayTrips = trips;
+
+                        // === Tambahkan ini untuk update chart besar sesuai hari yang dipilih ===
+                        this.$nextTick(() => {
+                            setTimeout(() => {
+                                // Filter data battery, fuel, SOC, PTO sesuai dateKey
+                                const batteryCanvas = document.getElementById('batteryEventChart');
+                                if (batteryCanvas) this.initBatteryEventChart(dateKey);
+
+                                const fuelCanvas = document.getElementById('fuelEventChart');
+                                if (fuelCanvas) this.initFuelEventChart(dateKey);
+
+                                const socCanvas = document.getElementById('socEventChart');
+                                if (socCanvas) this.initSOCEventChart(dateKey);
+
+                                const ptoCanvas = document.getElementById('ptoDetailChart');
+                                if (ptoCanvas) this.initPTODetailChart(dateKey);
+                            }, 50);
+                        });
                     },
 
                     generateDayList() {
@@ -1699,10 +1799,15 @@
                         this.dayList = result; // terbaru di atas
                     },
 
-                    initBatteryEventChart() {
+                    initBatteryEventChart(dateKey = null) {
                         const canvas = document.getElementById('batteryEventChart');
                         if (!canvas) return;
                         if (this.batteryEventChart) this.batteryEventChart.destroy();
+
+                        let dataArr = this.batteryRawData || [];
+                        if (dateKey) {
+                            dataArr = dataArr.filter(b => b.battery_ts && b.battery_ts.startsWith(dateKey));
+                        }
 
                         const labels = (this.batteryRawData || []).map(b =>
                             new Date(b.battery_ts).toLocaleString('id-ID', {
@@ -1769,12 +1874,17 @@
                         }
                     },
 
-                    initFuelEventChart() {
+                    initFuelEventChart(dateKey = null) {
                         const canvas = document.getElementById('fuelEventChart');
                         if (!canvas) return;
                         if (this.fuelEventChart) this.fuelEventChart.destroy();
 
-                        const labels = (this.fuelRawData || []).map(f =>
+                        let dataArr = this.fuelRawData || [];
+                        if (dateKey) {
+                            dataArr = dataArr.filter(f => f.fill_timestamp && f.fill_timestamp.startsWith(dateKey));
+                        }
+
+                        const labels = dataArr.map(f =>
                             new Date(f.fill_timestamp).toLocaleString('id-ID', {
                                 day: '2-digit',
                                 month: 'short',
@@ -1782,7 +1892,7 @@
                                 minute: '2-digit'
                             })
                         );
-                        const data = (this.fuelRawData || []).map(f => f.fill_amount_litres);
+                        const data = dataArr.map(f => f.fill_amount_litres);
 
                         if (!labels.length) {
                             labels.push('Tidak ada data');
@@ -1838,7 +1948,82 @@
                         }
                     },
 
-                    initPTODetailChart() {
+                    initSOCEventChart(dateKey = null) {
+                        const canvas = document.getElementById('socEventChart');
+                        if (!canvas) return;
+                        if (this.socEventChart) this.socEventChart.destroy();
+
+                        let dataArr = this.socRawData || [];
+                        if (dateKey) {
+                            dataArr = dataArr.filter(s => s.event_ts && s.event_ts.startsWith(dateKey));
+                        }
+
+                        const labels = dataArr.map(s =>
+                            new Date(s.event_ts).toLocaleString('id-ID', {
+                                day: '2-digit',
+                                month: 'short',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            })
+                        );
+                        const data = dataArr.map(s => s.value);
+
+                        if (!labels.length) {
+                            labels.push('Tidak ada data');
+                            data.push(0);
+                        }
+
+                        try {
+                            this.socEventChart = new Chart(canvas.getContext('2d'), {
+                                type: 'line',
+                                data: {
+                                    labels,
+                                    datasets: [{
+                                        label: 'SOC (%)',
+                                        data,
+                                        borderColor: '#6366F1',
+                                        backgroundColor: 'rgba(99,102,241,0.08)',
+                                        tension: 0.3,
+                                        fill: false,
+                                        pointRadius: 2
+                                    }]
+                                },
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: {
+                                        legend: {
+                                            position: 'top'
+                                        }
+                                    },
+                                    scales: {
+                                        y: {
+                                            beginAtZero: true,
+                                            max: 100,
+                                            title: {
+                                                display: true,
+                                                text: 'SOC (%)'
+                                            }
+                                        },
+                                        x: {
+                                            title: {
+                                                display: true,
+                                                text: 'Timestamp'
+                                            },
+                                            ticks: {
+                                                maxRotation: 45,
+                                                minRotation: 45
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                        } catch (err) {
+                            console.error('initSOCEventChart error', err);
+                        }
+                    },
+
+                    initPTODetailChart(dateKey = null) {
                         const canvas = document.getElementById('ptoDetailChart');
                         if (!canvas) return;
                         if (this.ptoDetailChart) this.ptoDetailChart.destroy();
@@ -1847,24 +2032,11 @@
                         let labels = [];
                         let dataStatus = [];
 
-                        // Filter data sesuai tab dan hari yang dipilih
-                        if (this.tab === 'perhari' && Array.isArray(this._singleDayTrips) && this._singleDayTrips.length > 0) {
-                            const dayDate = this._singleDayTrips[0]?.start_timestamp?.split('T')[0] || null;
-                            if (dayDate) {
-                                ptoEvents = (this.ptoRawData || []).filter(p => p.event_time && p.event_time.startsWith(
-                                    dayDate));
-                            }
-                        } else if (this.tab === 'perhari') {
-                            ptoEvents = (this.ptoRawData || []);
+                        // Filter data sesuai hari yang dipilih
+                        if (dateKey) {
+                            ptoEvents = (this.ptoRawData || []).filter(p => p.event_time && p.event_time.startsWith(dateKey));
                         } else {
                             ptoEvents = (this.ptoRawData || []);
-                        }
-
-                        // === Tambahkan pengecekan data kosong ===
-                        if (!labels.length) {
-
-                            labels.push('Tidak ada data');
-                            dataStatus.push(0);
                         }
 
                         // Sort by waktu
@@ -1887,6 +2059,11 @@
                             'Deactive': 0,
                             'Active': 1
                         };
+
+                        if (!labels.length) {
+                            labels.push('Tidak ada data');
+                            dataStatus.push(0);
+                        }
 
                         try {
                             this.ptoDetailChart = new Chart(canvas.getContext('2d'), {
