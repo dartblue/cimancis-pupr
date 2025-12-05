@@ -348,13 +348,13 @@
                         </div>
                     </div>
 
-                    <div :style="`height: ${chartCanvasHeight}px;`" class="min-h-[120px]"
-                        x-show="showChartFuel || showChartBattery" x-transition>
-                        <canvas id="vehicleMonitoringChart"></canvas>
+                    <div :style="`height: ${chartCanvasHeight}px;`" class="min-h-[120px]">
+                        <canvas id="batteryEventChart"></canvas>
                     </div>
-
-                    <div :style="`height: ${chartCanvasHeight}px;`" class="min-h-[120px]" x-show="showChartPTO"
-                        x-transition>
+                    <div :style="`height: ${chartCanvasHeight}px;`" class="min-h-[120px]">
+                        <canvas id="fuelEventChart"></canvas>
+                    </div>
+                    <div :style="`height: ${chartCanvasHeight}px;`" class="min-h-[120px]">
                         <canvas id="ptoDetailChart"></canvas>
                     </div>
 
@@ -640,7 +640,6 @@
                     searchQueryProject: '',
                     isLoading: false, // Tambahkan ini
                     isChartLoading: false,
-                    vehicleMonitoringChart: null,
                     ptoAverage: '0%',
                     batteryAverage: '0%',
                     fuelAverage: '0%',
@@ -650,6 +649,8 @@
                     dayList: [],
                     perhariListCharts: {},
                     ptoDetailChart: null,
+                    fuelEventChart: null,
+                    batteryEventChart: null,
                     showChartFuel: true,
                     showChartBattery: true,
                     showChartPTO: true,
@@ -714,17 +715,74 @@
                             }
                         });
 
+                        // Watcher Fuel
+                        this.$watch('showChartFuel', (val) => {
+                            if (val) {
+                                this.$nextTick(() => {
+                                    setTimeout(() => {
+                                        const fuelCanvas = document.getElementById('fuelEventChart');
+                                        if (fuelCanvas) this.initFuelEventChart();
+                                    }, 50);
+                                });
+                            } else {
+                                if (this.fuelEventChart) {
+                                    this.fuelEventChart.destroy();
+                                    this.fuelEventChart = null;
+                                }
+                            }
+                        });
+
+                        // Watcher Battery
+                        this.$watch('showChartBattery', (val) => {
+                            if (val) {
+                                this.$nextTick(() => {
+                                    setTimeout(() => {
+                                        const batteryCanvas = document.getElementById(
+                                            'batteryEventChart');
+                                        if (batteryCanvas) this.initBatteryEventChart();
+                                    }, 50);
+                                });
+                            } else {
+                                if (this.batteryEventChart) {
+                                    this.batteryEventChart.destroy();
+                                    this.batteryEventChart = null;
+                                }
+                            }
+                        });
+
+                        // Watcher PTO
+                        this.$watch('showChartPTO', (val) => {
+                            if (val) {
+                                this.$nextTick(() => {
+                                    setTimeout(() => {
+                                        const ptoCanvas = document.getElementById('ptoDetailChart');
+                                        if (ptoCanvas) this.initPTODetailChart();
+                                    }, 50);
+                                });
+                            } else {
+                                if (this.ptoDetailChart) {
+                                    this.ptoDetailChart.destroy();
+                                    this.ptoDetailChart = null;
+                                }
+                            }
+                        });
+
                         // Watch untuk tab changes
                         this.$nextTick(() => {
                             setTimeout(() => {
                                 this.destroyVehicleChart();
-                                const canvas = document.getElementById('vehicleMonitoringChart');
-                                if (canvas) {
-                                    this.initVehicleMonitoringChart();
-                                }
+
                                 const ptoCanvas = document.getElementById('ptoDetailChart');
                                 if (ptoCanvas) {
                                     this.initPTODetailChart();
+                                }
+                                const batteryCanvas = document.getElementById('batteryEventChart');
+                                if (batteryCanvas) {
+                                    this.initBatteryEventChart();
+                                }
+                                const fuelCanvas = document.getElementById('fuelEventChart');
+                                if (fuelCanvas) {
+                                    this.initFuelEventChart();
                                 }
                                 this.initPerhariListCharts();
                             }, 50);
@@ -732,14 +790,24 @@
                     },
 
                     destroyVehicleChart() {
-                        if (this.vehicleMonitoringChart) {
-                            this.vehicleMonitoringChart.destroy();
-                            this.vehicleMonitoringChart = null;
+                        if (this.batteryEventChart) {
+                            this.batteryEventChart.destroy();
+                            this.batteryEventChart = null;
                         }
+
+                        if (this.fuelEventChart) {
+                            this.fuelEventChart.destroy();
+                            this.fuelEventChart = null;
+                        }
+
+                        if (this.ptoDetailChart) {
+                            this.ptoDetailChart.destroy();
+                            this.ptoDetailChart = null;
+                        }
+
                         // destroy perhari list charts
                         this.destroyPerhariListCharts();
-                        // destroy pto chart
-                        this.destroyPTODetailChart();
+
                         // clear single-day trips
                         this._singleDayTrips = [];
                     },
@@ -1006,10 +1074,15 @@
                     },
 
                     async showDetail(vehicle) {
+                        this.showChartBattery = true;
+                        this.showChartFuel = true;
+                        this.showChartPTO = true;
+
                         this.destroyVehicleChart();
 
                         this.currentVehicle = vehicle;
                         this.tab = 'perhari';
+
                         this.isChartLoading = true;
 
                         const formatDate = (date) => {
@@ -1054,16 +1127,14 @@
 
                             // Fetch cartrack details in parallel (wait all)
                             await Promise.all([
-                                this.fetchPTOData(vehicle.registration),
                                 this.fetchFuelData(vehicle.registration),
+                                this.fetchPTOData(vehicle.registration),
                                 this.fetchBatteryData(vehicle.registration)
                             ]);
 
                             // Now generateDayList and initialize charts (DOM available)
                             this.generateDayList();
 
-                            // build polyline and map focus AFTER detailVehicle set
-                            // ...existing polyline logic...
                         } catch (error) {
                             console.error('Error in showDetail:', error);
                         } finally {
@@ -1072,16 +1143,47 @@
                                 setTimeout(() => {
                                     this.destroyVehicleChart();
                                     this.initPerhariListCharts();
-                                    const canvas = document.getElementById('vehicleMonitoringChart');
-                                    if (canvas) {
-                                        this.initVehicleMonitoringChart();
-                                    }
+
                                     const ptoCanvas = document.getElementById('ptoDetailChart');
                                     if (ptoCanvas) {
                                         this.initPTODetailChart();
                                     }
+                                    const batteryCanvas = document.getElementById('batteryEventChart');
+                                    if (batteryCanvas) {
+                                        this.initBatteryEventChart();
+                                    }
+                                    const fuelCanvas = document.getElementById('fuelEventChart');
+                                    if (fuelCanvas) {
+                                        this.initFuelEventChart();
+                                    }
+
+                                    this.drawVehiclePolyline(this.detailVehicle);
                                 }, 50);
                             });
+                        }
+                    },
+
+                    drawVehiclePolyline(trips) {
+                        // Hapus semua polyline kendaraan dari map
+                        Object.values(this.polylines).forEach(polyline => {
+                            if (polyline) polyline.remove();
+                        });
+                        this.polylines = {};
+
+                        // Buat polyline baru dari trip positions
+                        const positions = trips
+                            .filter(trip => trip.start_coordinates_latitude && trip.start_coordinates_longitude)
+                            .map(trip => [
+                                parseFloat(trip.start_coordinates_latitude),
+                                parseFloat(trip.start_coordinates_longitude)
+                            ]);
+
+                        if (positions.length > 1 && this.currentVehicle) {
+                            const polyline = L.polyline(positions, {
+                                color: this.getColorForVehicle(this.currentVehicle.vehicle_id)
+                            }).addTo(this.map);
+                            this.polylines[this.currentVehicle.vehicle_id] = polyline;
+                            this.map.fitBounds(polyline.getBounds());
                         }
                     },
 
@@ -1118,7 +1220,9 @@
                                 );
 
                                 if (!response.ok) {
-                                    throw new Error(`HTTP error! status: ${response.status}`);
+                                    console.error(`PTO API error! status: ${response.status}`);
+                                    this.ptoRawData = [];
+                                    return null;
                                 }
 
                                 const ptoData = await response.json();
@@ -1187,7 +1291,9 @@
                                 );
 
                                 if (!response.ok) {
-                                    throw new Error(`HTTP error! status: ${response.status}`);
+                                    console.error(`Fuel API error! status: ${response.status}`);
+                                    this.fuelRawData = [];
+                                    return null;
                                 }
 
                                 const fuelData = await response.json();
@@ -1237,15 +1343,14 @@
                             );
 
                             if (!response.ok) {
-                                throw new Error(`HTTP error! status: ${response.status}`);
+                                // Jika status bukan 200, handle error
+                                console.error(`Battery API error! status: ${response.status}`);
+                                this.batteryRawData = [];
+                                return null;
                             }
 
                             const batteryData = await response.json();
-                            console.log('Battery data received:', batteryData);
-
-                            // Simpan data Battery untuk digunakan di chart
                             this.batteryRawData = batteryData.data || [];
-
                             return {
                                 data: batteryData.data || [],
                                 total: batteryData.data ? batteryData.data.length : 0
@@ -1254,148 +1359,6 @@
                             console.error('Error fetching Battery data:', error);
                             this.batteryRawData = [];
                             return null;
-                        }
-                    },
-
-                    initVehicleMonitoringChart(mode = null) {
-                        mode = mode || this.tab;
-                        const ctx = document.getElementById('vehicleMonitoringChart');
-                        if (!ctx) return;
-
-                        if (this.vehicleMonitoringChart) {
-                            this.vehicleMonitoringChart.destroy();
-                            this.vehicleMonitoringChart = null;
-                        }
-
-                        // Prepare data
-                        const labels = [];
-                        const durationDataset = [];
-                        const batteryDataset = [];
-                        const fuelDataset = [];
-
-                        if (mode === 'perhari') {
-                            this.dayList.forEach(d => {
-                                labels.push(d.label);
-                                durationDataset.push(Number((d.totalDurationSeconds / 60).toFixed(1)));
-                            });
-
-                            // Battery & Fuel per hari
-                            const batteryByDate = {};
-                            (this.batteryRawData || []).forEach(b => {
-                                const key = (b.battery_ts || '').split(' ')[0];
-                                batteryByDate[key] = batteryByDate[key] || [];
-                                batteryByDate[key].push(parseFloat(b.battery_percentage_left || 0));
-                            });
-                            const fuelByDate = {};
-                            (this.fuelRawData || []).forEach(f => {
-                                const key = (f.fill_timestamp || '').split(' ')[0];
-                                fuelByDate[key] = fuelByDate[key] || [];
-                                fuelByDate[key].push(parseFloat(f.fill_amount_litres || 0));
-                            });
-
-                            for (let i = 0; i < this.dayList.length; i++) {
-                                const apiDate = this.dayList[i].date;
-                                const batArr = batteryByDate[apiDate] || [];
-                                batteryDataset.push(batArr.length ? Number((batArr.reduce((s, v) => s + v, 0) / batArr.length)
-                                    .toFixed(1)) : null);
-
-                                const fuelArr = fuelByDate[apiDate] || [];
-                                if (fuelArr.length) {
-                                    const totalFill = fuelArr.reduce((s, v) => s + v, 0);
-                                    fuelDataset.push(Number(Math.min(100, (totalFill / 50) * 100).toFixed(1)));
-                                } else {
-                                    fuelDataset.push(null);
-                                }
-                            }
-                        }
-                        // ...mode 'single-day' dan 'semua' tetap seperti sebelumnya...
-
-                        if (!labels.length) {
-                            labels.push('Tidak ada data');
-                            durationDataset.push(0);
-                        }
-
-                        // Build datasets sesuai checkbox
-                        const datasets = [{
-                            label: 'Duration (minutes)',
-                            data: durationDataset,
-                            borderColor: '#2563EB',
-                            backgroundColor: 'rgba(37,99,235,0.08)',
-                            tension: 0.3,
-                            fill: true,
-                            yAxisID: 'y'
-                        }];
-
-                        if (this.showChartBattery && batteryDataset.some(v => v !== null && v !== undefined)) {
-                            datasets.push({
-                                label: 'Battery %',
-                                data: batteryDataset,
-                                borderColor: '#3B82F6',
-                                backgroundColor: 'rgba(59,130,246,0.08)',
-                                tension: 0.3,
-                                fill: false,
-                                yAxisID: 'y2'
-                            });
-                        }
-                        if (this.showChartFuel && fuelDataset.some(v => v !== null && v !== undefined)) {
-                            datasets.push({
-                                label: 'Fuel Level (%)',
-                                data: fuelDataset,
-                                borderColor: '#F59E0B',
-                                backgroundColor: 'rgba(245,158,11,0.08)',
-                                tension: 0.3,
-                                fill: false,
-                                yAxisID: 'y2'
-                            });
-                        }
-
-                        try {
-                            this.vehicleMonitoringChart = new Chart(ctx, {
-                                type: 'line',
-                                data: {
-                                    labels,
-                                    datasets
-                                },
-                                options: {
-                                    responsive: true,
-                                    maintainAspectRatio: false,
-                                    plugins: {
-                                        legend: {
-                                            position: 'top'
-                                        }
-                                    },
-                                    scales: {
-                                        y: {
-                                            position: 'left',
-                                            title: {
-                                                display: true,
-                                                text: 'Minutes'
-                                            },
-                                            beginAtZero: true,
-                                            ticks: {
-                                                stepSize: 5
-                                            }
-                                        },
-                                        y2: {
-                                            position: 'right',
-                                            grid: {
-                                                drawOnChartArea: false
-                                            },
-                                            min: 0,
-                                            max: 100,
-                                            title: {
-                                                display: true,
-                                                text: '%'
-                                            },
-                                            ticks: {
-                                                callback: (v) => v + '%'
-                                            }
-                                        }
-                                    }
-                                }
-                            });
-                        } catch (err) {
-                            console.error('initVehicleMonitoringChart error', err);
                         }
                     },
 
@@ -1424,8 +1387,8 @@
                                 <div class="project-image-container">
                                     ${project.image_url ?
                                         `<a href="${project.image_url}" data-fancybox="gallery" data-caption="${project.project_name}" class="project-image">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <img src="${project.image_url}" alt="${project.project_name}">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        </a>` :
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <img src="${project.image_url}" alt="${project.project_name}">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                </a>` :
                                         `<div class="no-image">Tidak ada gambar</div>`
                                     }
                                 </div>
@@ -1665,7 +1628,6 @@
                         const trips = Array.isArray(this.detailVehicle) ? this.detailVehicle.filter(a => a.start_timestamp && a
                             .start_timestamp.startsWith(dateKey)) : [];
                         this._singleDayTrips = trips;
-                        this.initVehicleMonitoringChart('single-day');
                     },
 
                     generateDayList() {
@@ -1735,29 +1697,144 @@
                         }
 
                         this.dayList = result; // terbaru di atas
-                        console.log("Generated dayList:", this.dayList);
-
-                        // Initialize perhari small charts and update main chart / PTO chart
-                        this.$nextTick(() => {
-                            setTimeout(() => {
-                                this.destroyVehicleChart();
-                                this.initPerhariListCharts();
-                                const canvas = document.getElementById('vehicleMonitoringChart');
-                                if (canvas) {
-                                    this.initVehicleMonitoringChart();
-                                }
-                                const ptoCanvas = document.getElementById('ptoDetailChart');
-                                if (ptoCanvas) {
-                                    this.initPTODetailChart();
-                                }
-                            }, 50);
-                        });
                     },
 
-                    destroyPTODetailChart() {
-                        if (this.ptoDetailChart) {
-                            this.ptoDetailChart.destroy();
-                            this.ptoDetailChart = null;
+                    initBatteryEventChart() {
+                        const canvas = document.getElementById('batteryEventChart');
+                        if (!canvas) return;
+                        if (this.batteryEventChart) this.batteryEventChart.destroy();
+
+                        const labels = (this.batteryRawData || []).map(b =>
+                            new Date(b.battery_ts).toLocaleString('id-ID', {
+                                day: '2-digit',
+                                month: 'short',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            })
+                        );
+                        const data = (this.batteryRawData || []).map(b => b.battery_percentage_left);
+
+                        if (!labels.length) {
+                            labels.push('Tidak ada data');
+                            data.push(0);
+                        }
+
+                        try {
+                            this.batteryEventChart = new Chart(canvas.getContext('2d'), {
+                                type: 'line',
+                                data: {
+                                    labels,
+                                    datasets: [{
+                                        label: 'Battery (%)',
+                                        data,
+                                        borderColor: '#3B82F6',
+                                        backgroundColor: 'rgba(59,130,246,0.08)',
+                                        tension: 0.3,
+                                        fill: false,
+                                        pointRadius: 2
+                                    }]
+                                },
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: {
+                                        legend: {
+                                            position: 'top'
+                                        }
+                                    },
+                                    scales: {
+                                        y: {
+                                            beginAtZero: true,
+                                            max: 100,
+                                            title: {
+                                                display: true,
+                                                text: 'Battery (%)'
+                                            }
+                                        },
+                                        x: {
+                                            title: {
+                                                display: true,
+                                                text: 'Timestamp'
+                                            },
+                                            ticks: {
+                                                maxRotation: 45,
+                                                minRotation: 45
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                        } catch (err) {
+                            console.error('initBatteryEventChart error', err);
+                        }
+                    },
+
+                    initFuelEventChart() {
+                        const canvas = document.getElementById('fuelEventChart');
+                        if (!canvas) return;
+                        if (this.fuelEventChart) this.fuelEventChart.destroy();
+
+                        const labels = (this.fuelRawData || []).map(f =>
+                            new Date(f.fill_timestamp).toLocaleString('id-ID', {
+                                day: '2-digit',
+                                month: 'short',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            })
+                        );
+                        const data = (this.fuelRawData || []).map(f => f.fill_amount_litres);
+
+                        if (!labels.length) {
+                            labels.push('Tidak ada data');
+                            data.push(0);
+                        }
+
+                        try {
+                            this.fuelEventChart = new Chart(canvas.getContext('2d'), {
+                                type: 'line',
+                                data: {
+                                    labels,
+                                    datasets: [{
+                                        label: 'Fuel Fill (litres)',
+                                        data,
+                                        borderColor: '#F59E0B',
+                                        backgroundColor: 'rgba(245,158,11,0.08)',
+                                        tension: 0.3,
+                                        fill: false,
+                                        pointRadius: 2
+                                    }]
+                                },
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: {
+                                        legend: {
+                                            position: 'top'
+                                        }
+                                    },
+                                    scales: {
+                                        y: {
+                                            beginAtZero: true,
+                                            title: {
+                                                display: true,
+                                                text: 'Litres'
+                                            }
+                                        },
+                                        x: {
+                                            title: {
+                                                display: true,
+                                                text: 'Timestamp'
+                                            },
+                                            ticks: {
+                                                maxRotation: 45,
+                                                minRotation: 45
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                        } catch (err) {
+                            console.error('initFuelEventChart error', err);
                         }
                     },
 
@@ -1785,6 +1862,7 @@
 
                         // === Tambahkan pengecekan data kosong ===
                         if (!labels.length) {
+
                             labels.push('Tidak ada data');
                             dataStatus.push(0);
                         }
