@@ -40,19 +40,19 @@ Route::get('/detect-district', function (Request $request) {
         DB::raw('MAX(name) as name'),
         DB::raw('MAX(district_code) as district_code') // Tambahkan kolom lain yang relevan
     )
-    ->where('name', 'like', "%$villageName%")
-    ->groupBy('district_code')
-    ->get();
-   
-    
+        ->where('name', 'like', "%$villageName%")
+        ->groupBy('district_code')
+        ->get();
+
+
     if ($villages->count() === 1) {
         $district = District::where('code', $villages->first()->district_code)->first();
         return response()->json($district);
     }
 
-    foreach($villages as $village){
-        $district = District::where('code', $village->district_code)->where('city_code',$cityId)->first();
-        if($district){
+    foreach ($villages as $village) {
+        $district = District::where('code', $village->district_code)->where('city_code', $cityId)->first();
+        if ($district) {
             return response()->json($district);
         }
     }

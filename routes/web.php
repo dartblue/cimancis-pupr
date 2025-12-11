@@ -157,6 +157,8 @@ Route::post('/api/sync-cartrack', [CartrackVehicleController::class, 'syncCartra
 Route::post('/api/sync-cartrack-with-heavy-equipment', [CartrackVehicleController::class, 'syncCartrackWithHeavyEquipment'])->name('cartrack-vehicle.sync-cartrack-with-heavy-equipment');
 
 Route::post('/api/cartrack-activities', [CartrackActivityController::class, 'cartrackActivities']);
+Route::post('/api/cartrack-statuses', [App\Http\Controllers\CartrackVehicleStatusController::class, 'cartrackStatus']);
+
 
 Route::post('/api/sync-cartrack-activity', [CartrackActivityController::class, 'syncCartrackActivity'])
     ->name('api.sync-cartrack-activity');
