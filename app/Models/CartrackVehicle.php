@@ -49,6 +49,16 @@ class CartrackVehicle extends Model
     }
 
     /**
+     * Get the cartrackVehicleActivity associated with the CartrackVehicle
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function cartrackVehicleStatuses(): HasMany
+    {
+        return $this->hasMany(CartrackVehicleStatus::class, 'cartrack_vehicle_id', 'vehicle_id');
+    }
+
+    /**
      * Get the latestActivity associated with the CartrackVehicle
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasOne

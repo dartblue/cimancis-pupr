@@ -308,21 +308,7 @@
 
                     <div class="flex items-center justify-between mb-2">
                         <div class="flex gap-4 text-xs">
-                            <div>
-                                <input type="checkbox" id="cbFuel" x-model="showChartFuel"
-                                    class="accent-orange-500">
-                                <label for="cbFuel" class="text-orange-600 font-semibold">Fuel</label>
-                            </div>
-                            <div>
-                                <input type="checkbox" id="cbBattery" x-model="showChartBattery"
-                                    class="accent-blue-500">
-                                <label for="cbBattery" class="text-blue-600 font-semibold">Battery</label>
-                            </div>
-                            <div>
-                                <input type="checkbox" id="cbPTO" x-model="showChartPTO"
-                                    class="accent-green-500">
-                                <label for="cbPTO" class="text-green-600 font-semibold">PTO</label>
-                            </div>
+
                         </div>
                         <div class="flex gap-4 text-xs">
                             <div>
@@ -357,25 +343,7 @@
                     <div :style="`height: ${chartCanvasHeight}px;`" class="min-h-[120px]">
                         <canvas id="ptoDetailChart"></canvas>
                     </div>
-                    <div :style="`height: ${chartCanvasHeight}px;`" class="min-h-[120px]">
-                        <canvas id="socEventChart"></canvas>
-                    </div>
 
-                    <!-- Summary Stats -->
-                    <div class="grid grid-cols-3 gap-2 mt-2">
-                        <div class="text-center bg-white p-2 rounded shadow-sm">
-                            <div class="text-xs text-gray-600">PTO Average</div>
-                            <div class="text-sm font-semibold text-green-600" x-text="ptoAverage"></div>
-                        </div>
-                        <div class="text-center bg-white p-2 rounded shadow-sm">
-                            <div class="text-xs text-gray-600">Battery Average</div>
-                            <div class="text-sm font-semibold text-blue-600" x-text="batteryAverage"></div>
-                        </div>
-                        <div class="text-center bg-white p-2 rounded shadow-sm">
-                            <div class="text-xs text-gray-600">Fuel Average</div>
-                            <div class="text-sm font-semibold text-orange-600" x-text="fuelAverage"></div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -383,8 +351,6 @@
     </div>
 
     @push('styles')
-        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-            integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
         <style>
             .custom-div-icon {
                 background: transparent;
@@ -616,8 +582,6 @@
     @endpush
 
     @push('scripts')
-        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
         <script>
             function trackingMap() {
                 return {
@@ -649,17 +613,13 @@
                     ptoRawData: [],
                     fuelRawData: [],
                     batteryRawData: [],
+
                     dayList: [],
                     perhariListCharts: {},
                     ptoDetailChart: null,
                     fuelEventChart: null,
                     batteryEventChart: null,
-                    showChartFuel: true,
-                    showChartBattery: true,
-                    showChartPTO: true,
-                    socRawData: [], // Array untuk menyimpan data SOC hasil fetch
-                    socEventChart: null, // Chart.js instance untuk chart SOC
-                    showChartSOC: true,
+
                     _singleDayTrips: [],
 
                     // Tambahkan properti untuk resize
@@ -721,58 +681,6 @@
                             }
                         });
 
-                        // Watcher Fuel
-                        this.$watch('showChartFuel', (val) => {
-                            if (val) {
-                                this.$nextTick(() => {
-                                    setTimeout(() => {
-                                        const fuelCanvas = document.getElementById('fuelEventChart');
-                                        if (fuelCanvas) this.initFuelEventChart();
-                                    }, 50);
-                                });
-                            } else {
-                                if (this.fuelEventChart) {
-                                    this.fuelEventChart.destroy();
-                                    this.fuelEventChart = null;
-                                }
-                            }
-                        });
-
-                        // Watcher Battery
-                        this.$watch('showChartBattery', (val) => {
-                            if (val) {
-                                this.$nextTick(() => {
-                                    setTimeout(() => {
-                                        const batteryCanvas = document.getElementById(
-                                            'batteryEventChart');
-                                        if (batteryCanvas) this.initBatteryEventChart();
-                                    }, 50);
-                                });
-                            } else {
-                                if (this.batteryEventChart) {
-                                    this.batteryEventChart.destroy();
-                                    this.batteryEventChart = null;
-                                }
-                            }
-                        });
-
-                        // Watcher PTO
-                        this.$watch('showChartPTO', (val) => {
-                            if (val) {
-                                this.$nextTick(() => {
-                                    setTimeout(() => {
-                                        const ptoCanvas = document.getElementById('ptoDetailChart');
-                                        if (ptoCanvas) this.initPTODetailChart();
-                                    }, 50);
-                                });
-                            } else {
-                                if (this.ptoDetailChart) {
-                                    this.ptoDetailChart.destroy();
-                                    this.ptoDetailChart = null;
-                                }
-                            }
-                        });
-
                         // Watch untuk tab changes
                         this.$nextTick(() => {
                             setTimeout(() => {
@@ -782,10 +690,12 @@
                                 if (ptoCanvas) {
                                     this.initPTODetailChart();
                                 }
+
                                 const batteryCanvas = document.getElementById('batteryEventChart');
                                 if (batteryCanvas) {
                                     this.initBatteryEventChart();
                                 }
+
                                 const fuelCanvas = document.getElementById('fuelEventChart');
                                 if (fuelCanvas) {
                                     this.initFuelEventChart();
@@ -809,11 +719,6 @@
                         if (this.ptoDetailChart) {
                             this.ptoDetailChart.destroy();
                             this.ptoDetailChart = null;
-                        }
-
-                        if (this.socEventChart) {
-                            this.socEventChart.destroy();
-                            this.socEventChart = null;
                         }
 
                         // destroy perhari list charts
@@ -1085,10 +990,6 @@
                     },
 
                     async showDetail(vehicle) {
-                        this.showChartBattery = true;
-                        this.showChartFuel = true;
-                        this.showChartPTO = true;
-
                         this.destroyVehicleChart();
 
                         this.currentVehicle = vehicle;
@@ -1138,10 +1039,10 @@
 
                             // Fetch cartrack details in parallel (wait all)
                             await Promise.all([
-                                this.fetchFuelData(vehicle.registration),
-                                this.fetchPTOData(vehicle.registration),
-                                this.fetchBatteryData(vehicle.registration),
-                                this.fetchSOCData(vehicle.registration)
+                                this.fetchStatusData(vehicle.registration),
+                                // this.fetchFuelData(vehicle.registration),
+                                // this.fetchBatteryData(vehicle.registration),
+                                // this.fetchPTOData(vehicle.registration),
                             ]);
 
                             // Now generateDayList and initialize charts (DOM available)
@@ -1168,8 +1069,6 @@
                                     if (fuelCanvas) {
                                         this.initFuelEventChart();
                                     }
-                                    const socCanvas = document.getElementById('socEventChart');
-                                    if (socCanvas) this.initSOCEventChart();
 
                                     this.drawVehiclePolyline(this.detailVehicle);
                                 }, 50);
@@ -1271,6 +1170,53 @@
                         }
                     },
 
+                    async fetchStatusData(registration) {
+                        const formatDate = (date) => {
+                            const year = date.getFullYear();
+                            const month = String(date.getMonth() + 1).padStart(2, '0');
+                            const day = String(date.getDate()).padStart(2, '0');
+                            return `${year}-${month}-${day}`;
+                        };
+
+                        const params = {
+                            startDate: formatDate(new Date(this.startDate)),
+                            endDate: formatDate(new Date(this.endDate)),
+                        };
+
+                        try {
+                            const res = await fetch('/api/cartrack-statuses', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
+                                        'content')
+                                },
+                                body: JSON.stringify({
+                                    registration: registration,
+                                    ...params
+                                })
+                            });
+                            const json = await res.json();
+
+                            // === HANDLE ERROR RESPONSE ===
+                            if (json && json.status === false) {
+                                this.batteryRawData = [];
+                                this.fuelRawData = [];
+                                console.warn("No activities found for this vehicle.");
+                                return null;
+                            } else {
+                                // Normalize: if API returns { data: [...] } use json.data
+                                this.batteryRawData = Array.isArray(json) ? json : (json.data || []);
+                                this.fuelRawData = Array.isArray(json) ? json : (json.data || []);
+                            }
+
+
+                        } catch (error) {
+                            console.error('Error in fetchStatusData:', error);
+                            return null;
+                        }
+                    },
+
                     async fetchFuelData(registration) {
                         try {
                             // Format tanggal untuk API Cartrack
@@ -1343,9 +1289,19 @@
                     },
 
                     async fetchBatteryData(registration) {
-                        try {
-                            console.log('Fetching Battery data for:', registration);
+                        const formatDate = (date) => {
+                            const year = date.getFullYear();
+                            const month = String(date.getMonth() + 1).padStart(2, '0');
+                            const day = String(date.getDate()).padStart(2, '0');
+                            return `${year}-${month}-${day}`;
+                        };
 
+                        const params = {
+                            startDate: formatDate(new Date(this.startDate)),
+                            endDate: formatDate(new Date(this.endDate)),
+                        };
+
+                        try {
                             const response = await fetch(
                                 `https://fleetapi-id.cartrack.com/rest/vehicles/battery?filter[registration]=${registration}`, {
                                     method: 'GET',
@@ -1376,74 +1332,6 @@
                         }
                     },
 
-                    async fetchSOCData(registration) {
-                        try {
-                            const formatDate = (date) => {
-                                const year = date.getFullYear();
-                                const month = String(date.getMonth() + 1).padStart(2, '0');
-                                const day = String(date.getDate()).padStart(2, '0');
-                                return `${year}-${month}-${day}`;
-                            };
-
-                            let allSOCData = [];
-                            let loopDate = new Date(this.startDate);
-                            const endDate = new Date(this.endDate);
-
-                            while (loopDate <= endDate) {
-                                const dateStr = formatDate(loopDate);
-                                const startTimestamp = `${dateStr} 00:00:00`;
-                                const endTimestamp = `${dateStr} 23:59:59`;
-
-                                let currentPage = 1;
-                                let lastPage = 1;
-
-                                do {
-                                    const response = await fetch(
-                                        `https://fleetapi-id.cartrack.com/rest/vehicles/${registration}/soc?start_timestamp=${encodeURIComponent(startTimestamp)}&end_timestamp=${encodeURIComponent(endTimestamp)}&page=${currentPage}&limit=100`, {
-                                            method: 'GET',
-                                            headers: {
-                                                'Authorization': 'Basic T1BFUjAwMDE5OmU5MTEzNzc2Y2ZjZDZhN2Q5OTAxYWI5NGU1NWRjY2MyYzU4MjU4Zjg4N2RlNTc0ZTg0MmFjZGQ4YmM2NDAwOWU=',
-                                                'Content-Type': 'application/json',
-                                            }
-                                        }
-                                    );
-
-                                    if (!response.ok) {
-                                        console.error(`SOC API error! status: ${response.status}`);
-                                        break;
-                                    }
-
-                                    const socData = await response.json();
-
-                                    if (socData.data && socData.data.length > 0) {
-                                        allSOCData = allSOCData.concat(socData.data);
-                                    }
-
-                                    if (socData.meta && socData.meta.last_page) {
-                                        lastPage = socData.meta.last_page;
-                                    }
-
-                                    currentPage++;
-                                } while (currentPage <= lastPage);
-
-                                // Next day
-                                loopDate.setDate(loopDate.getDate() + 1);
-                            }
-
-                            // Simpan data SOC untuk digunakan di chart
-                            this.socRawData = allSOCData;
-
-                            return {
-                                data: allSOCData,
-                                total: allSOCData.length
-                            };
-                        } catch (error) {
-                            console.error('Error fetching SOC data:', error);
-                            this.socRawData = [];
-                            return null;
-                        }
-                    },
-
                     formatLatLon(v) {
                         if (!v.latest_activity) return "";
 
@@ -1469,8 +1357,8 @@
                                 <div class="project-image-container">
                                     ${project.image_url ?
                                         `<a href="${project.image_url}" data-fancybox="gallery" data-caption="${project.project_name}" class="project-image">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <img src="${project.image_url}" alt="${project.project_name}">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        </a>` :
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <img src="${project.image_url}" alt="${project.project_name}">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                </a>` :
                                         `<div class="no-image">Tidak ada gambar</div>`
                                     }
                                 </div>
@@ -1714,15 +1602,12 @@
                         // === Tambahkan ini untuk update chart besar sesuai hari yang dipilih ===
                         this.$nextTick(() => {
                             setTimeout(() => {
-                                // Filter data battery, fuel, SOC, PTO sesuai dateKey
+                                // Filter data battery, fuel, PTO sesuai dateKey
                                 const batteryCanvas = document.getElementById('batteryEventChart');
                                 if (batteryCanvas) this.initBatteryEventChart(dateKey);
 
                                 const fuelCanvas = document.getElementById('fuelEventChart');
                                 if (fuelCanvas) this.initFuelEventChart(dateKey);
-
-                                const socCanvas = document.getElementById('socEventChart');
-                                if (socCanvas) this.initSOCEventChart(dateKey);
 
                                 const ptoCanvas = document.getElementById('ptoDetailChart');
                                 if (ptoCanvas) this.initPTODetailChart(dateKey);
@@ -1806,18 +1691,18 @@
 
                         let dataArr = this.batteryRawData || [];
                         if (dateKey) {
-                            dataArr = dataArr.filter(b => b.battery_ts && b.battery_ts.startsWith(dateKey));
+                            dataArr = dataArr.filter(b => b.event_ts && b.event_ts.startsWith(dateKey));
                         }
 
                         const labels = (this.batteryRawData || []).map(b =>
-                            new Date(b.battery_ts).toLocaleString('id-ID', {
+                            new Date(b.event_ts).toLocaleString('id-ID', {
                                 day: '2-digit',
                                 month: 'short',
                                 hour: '2-digit',
                                 minute: '2-digit'
                             })
                         );
-                        const data = (this.batteryRawData || []).map(b => b.battery_percentage_left);
+                        const data = (this.batteryRawData || []).map(b => b.vext);
 
                         if (!labels.length) {
                             labels.push('Tidak ada data');
@@ -1844,7 +1729,11 @@
                                     maintainAspectRatio: false,
                                     plugins: {
                                         legend: {
-                                            position: 'top'
+                                            position: 'top',
+                                            labels: {
+                                                usePointStyle: true,
+                                                pointStyle: 'circle'
+                                            }
                                         }
                                     },
                                     scales: {
@@ -1881,18 +1770,18 @@
 
                         let dataArr = this.fuelRawData || [];
                         if (dateKey) {
-                            dataArr = dataArr.filter(f => f.fill_timestamp && f.fill_timestamp.startsWith(dateKey));
+                            dataArr = dataArr.filter(f => f.event_ts && f.event_ts.startsWith(dateKey));
                         }
 
                         const labels = dataArr.map(f =>
-                            new Date(f.fill_timestamp).toLocaleString('id-ID', {
+                            new Date(f.event_ts).toLocaleString('id-ID', {
                                 day: '2-digit',
                                 month: 'short',
                                 hour: '2-digit',
                                 minute: '2-digit'
                             })
                         );
-                        const data = dataArr.map(f => f.fill_amount_litres);
+                        const data = dataArr.map(f => f.fuel_level);
 
                         if (!labels.length) {
                             labels.push('Tidak ada data');
@@ -1919,7 +1808,11 @@
                                     maintainAspectRatio: false,
                                     plugins: {
                                         legend: {
-                                            position: 'top'
+                                            position: 'top',
+                                            labels: {
+                                                usePointStyle: true,
+                                                pointStyle: 'circle'
+                                            }
                                         }
                                     },
                                     scales: {
@@ -1945,81 +1838,6 @@
                             });
                         } catch (err) {
                             console.error('initFuelEventChart error', err);
-                        }
-                    },
-
-                    initSOCEventChart(dateKey = null) {
-                        const canvas = document.getElementById('socEventChart');
-                        if (!canvas) return;
-                        if (this.socEventChart) this.socEventChart.destroy();
-
-                        let dataArr = this.socRawData || [];
-                        if (dateKey) {
-                            dataArr = dataArr.filter(s => s.event_ts && s.event_ts.startsWith(dateKey));
-                        }
-
-                        const labels = dataArr.map(s =>
-                            new Date(s.event_ts).toLocaleString('id-ID', {
-                                day: '2-digit',
-                                month: 'short',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                            })
-                        );
-                        const data = dataArr.map(s => s.value);
-
-                        if (!labels.length) {
-                            labels.push('Tidak ada data');
-                            data.push(0);
-                        }
-
-                        try {
-                            this.socEventChart = new Chart(canvas.getContext('2d'), {
-                                type: 'line',
-                                data: {
-                                    labels,
-                                    datasets: [{
-                                        label: 'SOC (%)',
-                                        data,
-                                        borderColor: '#6366F1',
-                                        backgroundColor: 'rgba(99,102,241,0.08)',
-                                        tension: 0.3,
-                                        fill: false,
-                                        pointRadius: 2
-                                    }]
-                                },
-                                options: {
-                                    responsive: true,
-                                    maintainAspectRatio: false,
-                                    plugins: {
-                                        legend: {
-                                            position: 'top'
-                                        }
-                                    },
-                                    scales: {
-                                        y: {
-                                            beginAtZero: true,
-                                            max: 100,
-                                            title: {
-                                                display: true,
-                                                text: 'SOC (%)'
-                                            }
-                                        },
-                                        x: {
-                                            title: {
-                                                display: true,
-                                                text: 'Timestamp'
-                                            },
-                                            ticks: {
-                                                maxRotation: 45,
-                                                minRotation: 45
-                                            }
-                                        }
-                                    }
-                                }
-                            });
-                        } catch (err) {
-                            console.error('initSOCEventChart error', err);
                         }
                     },
 
@@ -2085,7 +1903,11 @@
                                     maintainAspectRatio: false,
                                     plugins: {
                                         legend: {
-                                            position: 'top'
+                                            position: 'top',
+                                            labels: {
+                                                usePointStyle: true,
+                                                pointStyle: 'circle'
+                                            }
                                         }
                                     },
                                     scales: {
