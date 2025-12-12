@@ -127,7 +127,7 @@ class HeavyEquipmentController extends Controller
         $validatedData = $request->validate([
             'name' => 'required|max:255',
             'nomor_lambung' => 'required|max:255',
-            'status' => 'required|in:beroperasi,ready,maintenance',
+            'status' => 'required|in:beroperasi,ready,maintenance,rusak,tidak ada',
             'merek' => 'required|max:255',
             'tahun' => 'required|numeric',
             'kondisi' => 'required|in:baik,rusak_ringan,rusak_berat',
