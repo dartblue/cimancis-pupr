@@ -680,26 +680,21 @@
                         });
 
                         // Watch untuk tab changes
-                        this.$nextTick(() => {
-                            setTimeout(() => {
-                                this.destroyVehicleChart();
-
-                                const ptoCanvas = document.getElementById('ptoDetailChart');
-                                if (ptoCanvas) {
-                                    this.initPTODetailChart();
-                                }
-
-                                const batteryCanvas = document.getElementById('batteryEventChart');
-                                if (batteryCanvas) {
-                                    this.initBatteryEventChart();
-                                }
-
-                                const fuelCanvas = document.getElementById('fuelEventChart');
-                                if (fuelCanvas) {
-                                    this.initFuelEventChart();
-                                }
-                                this.initPerhariListCharts();
-                            }, 50);
+                        this.$watch('tab', (val) => {
+                            this.isChartLoading = true;
+                            this.$nextTick(() => {
+                                setTimeout(() => {
+                                    this.destroyVehicleChart();
+                                    const ptoCanvas = document.getElementById('ptoDetailChart');
+                                    if (ptoCanvas) this.initPTODetailChart();
+                                    const batteryCanvas = document.getElementById('batteryEventChart');
+                                    if (batteryCanvas) this.initBatteryEventChart();
+                                    const fuelCanvas = document.getElementById('fuelEventChart');
+                                    if (fuelCanvas) this.initFuelEventChart();
+                                    this.initPerhariListCharts();
+                                    this.isChartLoading = false;
+                                }, 50);
+                            });
                         });
                     },
 
@@ -814,25 +809,45 @@
                         }
 
                         let berhenti = 0,
-                            kilometer = 0,
+                            meter = 0,
                             mengemudi = 0,
                             idle = 0,
                             starter = 0;
+                        let berhentiSec = 0,
+                            mengemudiSec = 0,
+                            starterSec = 0;
 
                         trips.forEach(trip => {
-                            if (trip.events_stop) berhenti += 1;
-                            if (trip.trip_distance) kilometer += parseFloat(trip.trip_distance) || 0;
-                            if (trip.events_drive) mengemudi += 1;
+                            // event_stop: trip_distance == 0, jumlahkan trip_duration_seconds
+                            if (parseFloat(trip.trip_distance) === 0 && trip.trip_duration_seconds) {
+                                berhentiSec += parseInt(trip.trip_duration_seconds) || 0;
+                            }
+                            // event_drive: trip_distance > 0, jumlahkan trip_duration_seconds
+                            if (parseFloat(trip.trip_distance) > 0 && trip.trip_duration_seconds) {
+                                mengemudiSec += parseInt(trip.trip_duration_seconds) || 0;
+                            }
+                            // event_starter: semua trip, jumlahkan trip_duration_seconds
+                            if (trip.trip_duration_seconds) {
+                                starterSec += parseInt(trip.trip_duration_seconds) || 0;
+                            }
+                            // meter (trip_distance dalam km, konversi ke meter)
+                            if (trip.trip_distance) meter += (parseFloat(trip.trip_distance) || 0) * 1000;
+                            // idle
                             if (trip.idle_time_seconds) idle += parseInt(trip.idle_time_seconds) || 0;
-                            if (trip.events_starter) starter += 1;
+                        });
+
+                        // Format meter ke kilometer dengan pemisah ribuan
+                        let kilometerStr = (meter / 1000).toLocaleString('id-ID', {
+                            minimumFractionDigits: 3,
+                            maximumFractionDigits: 3
                         });
 
                         return {
-                            berhenti,
-                            kilometer: kilometer.toFixed(2),
-                            mengemudi,
+                            berhenti: this.formatSeconds(berhentiSec),
+                            kilometer: kilometerStr,
+                            mengemudi: this.formatSeconds(mengemudiSec),
                             idle: this.formatSeconds(idle),
-                            starter
+                            starter: this.formatSeconds(starterSec)
                         };
                     },
 
@@ -1040,7 +1055,7 @@
                                 this.fetchStatusData(vehicle.registration),
                                 // this.fetchFuelData(vehicle.registration),
                                 // this.fetchBatteryData(vehicle.registration),
-                                // this.fetchPTOData(vehicle.registration),
+                                this.fetchPTOData(vehicle.registration),
                             ]);
 
                             // Now generateDayList and initialize charts (DOM available)
@@ -1355,8 +1370,8 @@
                                 <div class="project-image-container">
                                     ${project.image_url ?
                                         `<a href="${project.image_url}" data-fancybox="gallery" data-caption="${project.project_name}" class="project-image">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <img src="${project.image_url}" alt="${project.project_name}">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                </a>` :
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <img src="${project.image_url}" alt="${project.project_name}">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        </a>` :
                                         `<div class="no-image">Tidak ada gambar</div>`
                                     }
                                 </div>
@@ -1592,23 +1607,20 @@
                     },
 
                     showDetailForDay(dateKey) {
-                        // Filter detailVehicle by date and show single-day mode on the main chart
+                        // Filter detailVehicle by date dan show single-day mode on the main chart
+                        this.isChartLoading = true;
                         const trips = Array.isArray(this.detailVehicle) ? this.detailVehicle.filter(a => a.start_timestamp && a
                             .start_timestamp.startsWith(dateKey)) : [];
                         this._singleDayTrips = trips;
-
-                        // === Tambahkan ini untuk update chart besar sesuai hari yang dipilih ===
                         this.$nextTick(() => {
                             setTimeout(() => {
-                                // Filter data battery, fuel, PTO sesuai dateKey
                                 const batteryCanvas = document.getElementById('batteryEventChart');
                                 if (batteryCanvas) this.initBatteryEventChart(dateKey);
-
                                 const fuelCanvas = document.getElementById('fuelEventChart');
                                 if (fuelCanvas) this.initFuelEventChart(dateKey);
-
                                 const ptoCanvas = document.getElementById('ptoDetailChart');
                                 if (ptoCanvas) this.initPTODetailChart(dateKey);
+                                this.isChartLoading = false;
                             }, 50);
                         });
                     },
@@ -1725,6 +1737,10 @@
                                 options: {
                                     responsive: true,
                                     maintainAspectRatio: false,
+                                    interaction: {
+                                        mode: 'nearest',
+                                        intersect: false
+                                    },
                                     plugins: {
                                         legend: {
                                             position: 'top',
@@ -1732,6 +1748,9 @@
                                                 usePointStyle: true,
                                                 pointStyle: 'circle'
                                             }
+                                        },
+                                        tooltip: {
+                                            enabled: true
                                         }
                                     },
                                     scales: {
@@ -1804,6 +1823,10 @@
                                 options: {
                                     responsive: true,
                                     maintainAspectRatio: false,
+                                    interaction: {
+                                        mode: 'nearest',
+                                        intersect: false
+                                    },
                                     plugins: {
                                         legend: {
                                             position: 'top',
@@ -1811,6 +1834,9 @@
                                                 usePointStyle: true,
                                                 pointStyle: 'circle'
                                             }
+                                        },
+                                        tooltip: {
+                                            enabled: true
                                         }
                                     },
                                     scales: {
@@ -1899,6 +1925,12 @@
                                 options: {
                                     responsive: true,
                                     maintainAspectRatio: false,
+
+                                    interaction: {
+                                        mode: 'nearest',
+                                        intersect: false
+                                    },
+
                                     plugins: {
                                         legend: {
                                             position: 'top',
@@ -1906,8 +1938,12 @@
                                                 usePointStyle: true,
                                                 pointStyle: 'circle'
                                             }
+                                        },
+                                        tooltip: {
+                                            enabled: true
                                         }
                                     },
+
                                     scales: {
                                         y: {
                                             min: 0,
@@ -1935,6 +1971,7 @@
                                         }
                                     }
                                 }
+
                             });
                         } catch (err) {
                             console.error('initPTODetailChart error', err);
