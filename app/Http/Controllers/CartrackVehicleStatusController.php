@@ -18,7 +18,7 @@ class CartrackVehicleStatusController extends Controller
         })
             ->where('event_ts', '>=', $request->startDate)
             ->where('event_ts', '<=', $request->endDate)
-            ->orderBy('event_ts', 'desc')
+            ->orderBy('event_ts', 'asc')
             ->get();
 
         if ($data->isEmpty()) {
